@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>100マス計算</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #f0f4ff;
+    --card: #ffffff;
+    --primary: #3b6ef8;
+    --primary-dark: #2a52c9;
+    --accent: #ff6b35;
+    --success: #22c55e;
+    --error: #ef4444;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #e2e8f0;
+    --header-cell: #dbeafe;
+    --cell-active: #fffbeb;
+    --cell-active-border: #f59e0b;
+    --shadow: 0 4px 24px rgba(59,110,248,0.10);
+    --numpad-bg: #f1f5f9;
+    --numpad-color: #1e293b;
+  }
+  body.dark {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --primary: #60a5fa;
+    --primary-dark: #3b82f6;
+    --accent: #fb923c;
+    --success: #4ade80;
+    --error: #f87171;
+    --text: #f1f5f9;
+    --text-light: #94a3b8;
+    --border: #334155;
+    --header-cell: #1e3a5f;
+    --cell-active: #2d2a1a;
+    --cell-active-border: #d97706;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --numpad-bg: #334155;
+    --numpad-color: #f1f5f9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'M PLUS Rounded 1c', 'Nunito', sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100dvh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; overflow: hidden;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .screen { display: none; width: 100%; max-width: 640px; padding: 20px 16px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+  .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-size: 2.2rem; font-weight: 900; color: var(--primary); letter-spacing: -1px; line-height: 1.1; }
+  .logo span { color: var(--accent); }
+  .subtitle { font-size: 0.85rem; color: var(--text-light); }
+  .dark-toggle { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; color: var(--text); }
+
+  .player-card { width: 100%; background: var(--card); border-radius: 16px; padding: 12px 16px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; }
+  .player-avatar { font-size: 2rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: var(--header-cell); border-radius: 12px; flex-shrink: 0; }
+  .player-info { flex: 1; min-width: 0; }
+  .player-title { font-size: 0.72rem; font-weight: 800; color: var(--accent); letter-spacing: 0.05em; }
+  .player-level { font-size: 1.1rem; font-weight: 900; color: var(--primary); line-height: 1.2; }
+  .xp-bar-wrap { width: 100%; height: 8px; background: var(--border); border-radius: 99px; margin-top: 4px; overflow: hidden; }
+  .xp-bar { height: 100%; background: linear-gradient(90deg, var(--primary), #7c3aed); border-radius: 99px; transition: width 0.6s cubic-bezier(0.34,1.2,0.64,1); }
+  .xp-label { font-size: 0.68rem; color: var(--text-light); font-weight: 700; margin-top: 2px; }
+
+  .best-row { width: 100%; display: flex; gap: 8px; }
+  .best-chip { flex: 1; background: var(--card); border-radius: 12px; padding: 8px 10px; box-shadow: var(--shadow); text-align: center; }
+  .best-chip .bc-label { font-size: 0.62rem; color: var(--text-light); font-weight: 800; }
+  .best-chip .bc-val { font-size: 0.9rem; font-weight: 900; color: var(--primary); }
+
+  .section-label { font-size: 0.75rem; font-weight: 800; color: var(--text-light); letter-spacing: 0.08em; text-transform: uppercase; align-self: flex-start; margin-bottom: -6px; }
+  .btn-group { display: flex; gap: 10px; width: 100%; }
+  .btn-choice { flex: 1; padding: 12px 8px; border-radius: 14px; border: 3px solid var(--border); background: var(--card); font-family: inherit; font-size: 0.95rem; font-weight: 800; color: var(--text-light); cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .btn-choice .icon { font-size: 1.4rem; }
+  .btn-choice:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
+  .btn-choice.selected { border-color: var(--primary); background: var(--header-cell); color: var(--primary); }
+
+  .btn-start { width: 100%; padding: 18px; border-radius: 18px; border: none; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; font-family: inherit; font-size: 1.3rem; font-weight: 900; cursor: pointer; box-shadow: 0 6px 20px rgba(59,110,248,0.35); transition: all 0.15s; letter-spacing: 0.05em; }
+  .btn-start:active { transform: scale(0.97); }
+  .btn-graph { width: 100%; padding: 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--card); font-family: inherit; font-size: 0.9rem; font-weight: 800; color: var(--text-light); cursor: pointer; transition: all 0.15s; }
+  .btn-graph:hover { border-color: var(--primary); color: var(--primary); }
+
+  #screen-game { padding: 8px; gap: 8px; max-width: 100%; height: 100dvh; justify-content: flex-start; }
+  .game-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); }
+  .timer-display { font-size: 1.6rem; font-weight: 900; color: var(--primary); font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+  .timer-display.running { color: var(--accent); }
+  .game-info { font-size: 0.8rem; color: var(--text-light); font-weight: 700; }
+  .btn-end { padding: 8px 18px; border-radius: 10px; border: none; background: var(--error); color: white; font-family: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: all 0.15s; }
+  .btn-end:active { transform: scale(0.95); }
+
+  .grid-wrapper { width: 100%; flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); }
+  .grid-table { border-collapse: collapse; width: 100%; }
+  .grid-table td { border: 1px solid var(--border); text-align: center; font-weight: 800; user-select: none; -webkit-user-select: none; }
+  .grid-table .cell-header { background: var(--header-cell); color: var(--primary); position: sticky; }
+  .grid-table .cell-header.top { top: 0; z-index: 3; }
+  .grid-table .cell-header.left { left: 0; z-index: 2; }
+  .grid-table .cell-header.corner { left: 0; top: 0; z-index: 4; background: var(--primary); color: white; }
+  .grid-table .cell-input { background: var(--card); color: var(--text); cursor: pointer; transition: background 0.1s; }
+  .grid-table .cell-input.active { background: var(--cell-active); outline: 3px solid var(--cell-active-border); outline-offset: -3px; z-index: 1; position: relative; }
+  .grid-table .cell-input.filled { color: var(--primary); }
+
+  .numpad { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); }
+  .numpad-btn { padding: 14px 0; border-radius: 10px; border: none; background: var(--numpad-bg); font-family: inherit; font-size: 1.3rem; font-weight: 900; color: var(--numpad-color); cursor: pointer; transition: all 0.1s; -webkit-tap-highlight-color: transparent; }
+  .numpad-btn:active { background: var(--primary); color: white; transform: scale(0.94); }
+  .numpad-btn.zero { grid-column: span 2; }
+  .numpad-btn.del { background: #fee2e2; color: var(--error); }
+  body.dark .numpad-btn.del { background: #3f1010; }
+  .numpad-btn.del:active { background: var(--error); color: white; }
+
+  .result-card { width: 100%; background: var(--card); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .result-time { font-size: 3rem; font-weight: 900; color: var(--primary); letter-spacing: -2px; line-height: 1; }
+  .result-time-label { font-size: 0.8rem; color: var(--text-light); font-weight: 700; margin-top: -6px; }
+  .result-score { font-size: 1.4rem; font-weight: 900; }
+  .result-score .correct-count { color: var(--success); }
+  .result-score .wrong-count { color: var(--error); }
+  .result-grade { font-size: 2rem; font-weight: 900; padding: 8px 24px; border-radius: 12px; }
+  .xp-gain { font-size: 1rem; font-weight: 900; color: #7c3aed; text-align: center; }
+  .new-best-banner { width: 100%; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; border-radius: 14px; padding: 10px 16px; text-align: center; font-size: 1rem; font-weight: 900; display: none; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+  .new-best-banner.show { display: block; }
+
+  .result-grid-wrapper { width: 100%; overflow: auto; max-height: 36vh; border-radius: 12px; border: 2px solid var(--border); }
+  .result-grid-table { border-collapse: collapse; width: 100%; }
+  .result-grid-table td { border: 1px solid var(--border); text-align: center; font-size: 0.8rem; font-weight: 700; padding: 5px 4px; }
+  .result-grid-table .rh { background: var(--header-cell); color: var(--primary); font-weight: 800; position: sticky; }
+  .result-grid-table .rh.top { top: 0; }
+  .result-grid-table .rh.left { left: 0; z-index: 2; }
+  .result-grid-table .rh.corner { left: 0; top: 0; z-index: 3; background: var(--primary); color: white; }
+  .result-grid-table .cell-ok { color: var(--text); }
+  .result-grid-table .cell-wrong { background: #fef2f2; color: var(--error); font-weight: 900; }
+  body.dark .result-grid-table .cell-wrong { background: #3f1010; }
+  .result-grid-table .cell-wrong .correct-ans { font-size: 0.65rem; color: var(--success); display: block; }
+  .result-grid-table .cell-empty { color: var(--text-light); }
+
+  .btn-row { display: flex; gap: 8px; width: 100%; }
+  .btn-action { flex: 1; padding: 14px 8px; border-radius: 14px; border: none; font-family: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: all 0.15s; }
+  .btn-action:active { transform: scale(0.96); }
+  .btn-action.primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(59,110,248,0.3); }
+  .btn-action.secondary { background: var(--numpad-bg); color: var(--text); }
+  .btn-action.accent { background: var(--accent); color: white; }
+
+  .review-problem { width: 100%; background: var(--card); border-radius: 20px; padding: 24px; box-shadow: var(--shadow); text-align: center; }
+  .review-eq { font-size: 2.8rem; font-weight: 900; color: var(--text); letter-spacing: -1px; }
+  .review-eq .ans-box { display: inline-block; min-width: 80px; border-bottom: 4px solid var(--primary); color: var(--primary); }
+  .review-progress { font-size: 0.85rem; color: var(--text-light); font-weight: 700; }
+  .review-numpad { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); }
+
+  #screen-graph { padding: 16px; gap: 14px; }
+  .graph-header { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+  .graph-title { font-size: 1.2rem; font-weight: 900; color: var(--primary); }
+  .graph-filter { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+  .gf-btn { padding: 6px 12px; border-radius: 8px; border: 2px solid var(--border); background: var(--card); font-family: inherit; font-size: 0.75rem; font-weight: 800; color: var(--text-light); cursor: pointer; transition: all 0.15s; }
+  .gf-btn.active { border-color: var(--primary); background: var(--header-cell); color: var(--primary); }
+  .graph-canvas-wrap { width: 100%; background: var(--card); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
+  canvas#graph-canvas { width: 100%; display: block; }
+  .graph-empty { text-align: center; color: var(--text-light); font-size: 0.9rem; padding: 40px 0; }
+
+  .feedback-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 100; }
+  .feedback-msg { font-size: 4rem; font-weight: 900; opacity: 0; transform: scale(0.5); transition: all 0.15s cubic-bezier(0.34,1.56,0.64,1); }
+  .feedback-msg.show { opacity: 1; transform: scale(1); }
+  .feedback-msg.hide { opacity: 0; transform: scale(1.3); transition: all 0.2s; }
+
+  .levelup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .levelup-overlay.show { opacity: 1; pointer-events: auto; }
+  .levelup-card { background: var(--card); border-radius: 24px; padding: 32px 40px; text-align: center; max-width: 280px; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+  .levelup-card .lu-emoji { font-size: 3rem; }
+  .levelup-card .lu-title { font-size: 1.5rem; font-weight: 900; color: var(--primary); margin-top: 8px; }
+  .levelup-card .lu-sub { font-size: 0.85rem; color: var(--text-light); margin-top: 4px; }
+  .levelup-card .lu-newtitle { font-size: 1rem; font-weight: 900; color: var(--accent); margin-top: 12px; }
+  .levelup-card button { margin-top: 20px; padding: 12px 32px; border-radius: 12px; border: none; background: var(--primary); color: white; font-family: inherit; font-size: 1rem; font-weight: 800; cursor: pointer; }
+
+  @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+  .screen.active { animation: slideIn 0.25s ease; }
+</style>
+</head>
+<body>
+
+<!-- TOP SCREEN -->
+<div id="screen-top" class="screen active">
+  <div class="top-bar">
+    <div>
+      <div class="logo">100マス<span>計算</span></div>
+      <div class="subtitle">速さと正確さをきたえよう！</div>
+    </div>
+    <button class="dark-toggle" id="dark-toggle">🌙</button>
+  </div>
+  <div class="player-card">
+    <div class="player-avatar" id="top-avatar">🌱</div>
+    <div class="player-info">
+      <div class="player-title" id="top-title">はじめての ちょうせんしゃ</div>
+      <div class="player-level" id="top-level">Lv.1</div>
+      <div class="xp-bar-wrap"><div class="xp-bar" id="top-xpbar" style="width:0%"></div></div>
+      <div class="xp-label" id="top-xplabel">0 / 100 XP</div>
+    </div>
+  </div>
+  <div class="best-row" id="best-row"></div>
+  <div class="section-label">マスの数</div>
+  <div class="btn-group" id="size-group">
+    <button class="btn-choice selected" data-val="100"><span class="icon">🔢</span>100マス</button>
+    <button class="btn-choice" data-val="50"><span class="icon">⚡</span>50マス</button>
+    <button class="btn-choice" data-val="30"><span class="icon">🎯</span>30マス</button>
+  </div>
+  <div class="section-label">計算のしゅるい</div>
+  <div class="btn-group" id="type-group">
+    <button class="btn-choice selected" data-val="add"><span class="icon">➕</span>たしざん</button>
+    <button class="btn-choice" data-val="sub"><span class="icon">➖</span>ひきざん</button>
+    <button class="btn-choice" data-val="mul"><span class="icon">✖️</span>かけざん</button>
+  </div>
+  <button class="btn-start" id="btn-start">はじめる ▶</button>
+  <button class="btn-graph" id="btn-show-graph">📈 きろくグラフを見る</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="screen-game" class="screen">
+  <div class="game-header">
+    <div id="timer-display" class="timer-display">0:00.0</div>
+    <div class="game-info" id="game-info">0 / 0 にゅうりょく</div>
+    <button class="btn-end" id="btn-end">おわり</button>
+  </div>
+  <div class="grid-wrapper" id="grid-wrapper">
+    <table class="grid-table" id="grid-table"></table>
+  </div>
+  <div class="numpad" id="numpad">
+    <button class="numpad-btn" data-n="1">1</button>
+    <button class="numpad-btn" data-n="2">2</button>
+    <button class="numpad-btn" data-n="3">3</button>
+    <button class="numpad-btn" data-n="4">4</button>
+    <button class="numpad-btn" data-n="5">5</button>
+    <button class="numpad-btn" data-n="6">6</button>
+    <button class="numpad-btn" data-n="7">7</button>
+    <button class="numpad-btn" data-n="8">8</button>
+    <button class="numpad-btn" data-n="9">9</button>
+    <button class="numpad-btn zero" data-n="0">0</button>
+    <button class="numpad-btn del" data-n="del">⌫</button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="screen-result" class="screen">
+  <div class="new-best-banner" id="new-best-banner">🏅 じこベスト こうしん！</div>
+  <div class="result-card">
+    <div id="result-grade" class="result-grade"></div>
+    <div id="result-time" class="result-time"></div>
+    <div class="result-time-label">タイム</div>
+    <div id="result-score" class="result-score"></div>
+    <div class="xp-gain" id="xp-gain"></div>
+  </div>
+  <div class="result-grid-wrapper">
+    <table class="result-grid-table" id="result-grid-table"></table>
+  </div>
+  <div class="btn-row">
+    <button class="btn-action accent" id="btn-review">ミスだけやる 🔥</button>
+  </div>
+  <div class="btn-row">
+    <button class="btn-action secondary" id="btn-retry">もう一回</button>
+    <button class="btn-action primary" id="btn-new">新しい問題</button>
+  </div>
+</div>
+
+<!-- REVIEW SCREEN -->
+<div id="screen-review" class="screen">
+  <div style="text-align:center; width:100%;">
+    <div style="font-size:1.1rem; font-weight:900; color:var(--accent);">🔥 ミス復習</div>
+    <div class="review-progress" id="review-progress"></div>
+  </div>
+  <div class="review-problem">
+    <div class="review-eq" id="review-eq"></div>
+  </div>
+  <div class="review-numpad">
+    <button class="numpad-btn" data-rn="1">1</button>
+    <button class="numpad-btn" data-rn="2">2</button>
+    <button class="numpad-btn" data-rn="3">3</button>
+    <button class="numpad-btn" data-rn="4">4</button>
+    <button class="numpad-btn" data-rn="5">5</button>
+    <button class="numpad-btn" data-rn="6">6</button>
+    <button class="numpad-btn" data-rn="7">7</button>
+    <button class="numpad-btn" data-rn="8">8</button>
+    <button class="numpad-btn" data-rn="9">9</button>
+    <button class="numpad-btn zero" data-rn="0">0</button>
+    <button class="numpad-btn del" data-rn="del">⌫</button>
+  </div>
+  <div class="btn-row">
+    <button class="btn-action secondary" id="btn-review-back">← もどる</button>
+  </div>
+</div>
+
+<!-- GRAPH SCREEN -->
+<div id="screen-graph" class="screen">
+  <div class="graph-header">
+    <div class="graph-title">📈 きろくグラフ</div>
+    <button class="btn-action secondary" id="btn-graph-back" style="flex:0;padding:8px 16px;font-size:0.85rem;">← もどる</button>
+  </div>
+  <div class="graph-filter" id="graph-filter"></div>
+  <div class="graph-canvas-wrap">
+    <canvas id="graph-canvas" height="220"></canvas>
+    <div class="graph-empty" id="graph-empty"></div>
+  </div>
+  <div style="font-size:0.75rem; color:var(--text-light); text-align:center;">全問正解したときのタイムを記録しています（最大50件）</div>
+</div>
+
+<!-- Level up overlay -->
+<div class="levelup-overlay" id="levelup-overlay">
+  <div class="levelup-card">
+    <div class="lu-emoji">🎉</div>
+    <div class="lu-title">レベルアップ！</div>
+    <div class="lu-sub" id="lu-sub">Lv.2 になった！</div>
+    <div class="lu-newtitle" id="lu-newtitle"></div>
+    <button onclick="document.getElementById('levelup-overlay').classList.remove('show')">やった！</button>
+  </div>
+</div>
+
+<!-- Feedback overlay -->
+<div class="feedback-overlay">
+  <div class="feedback-msg" id="feedback-msg"></div>
+</div>
+
+<script>
+// ===== AUDIO (Web Audio API) =====
+let _ac = null;
+function ac() {
+  if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)();
+  return _ac;
+}
+function resumeAudio() { try { const a = ac(); if (a.state === 'suspended') a.resume(); } catch(e){} }
+
+function tone(freq, type, dur, vol, delay = 0) {
+  try {
+    const ctx = ac();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type; o.frequency.value = freq;
+    const t = ctx.currentTime + delay;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t); o.stop(t + dur + 0.05);
+  } catch(e){}
+}
+
+// キー入力音（コツッ）
+const seKey     = () => tone(800, 'sine', 0.055, 0.07);
+// 削除音
+const seDel     = () => tone(380, 'sine', 0.07,  0.07);
+// 正解（ピンポン♪）
+const seCorrect = () => { tone(880, 'sine', 0.12, 0.18); tone(1320, 'sine', 0.18, 0.14, 0.10); };
+// ミス
+const seWrong   = () => tone(200, 'sawtooth', 0.15, 0.12);
+// 全完了（キラキラ）
+const seComplete = () => [659,784,988,1319].forEach((f,i) => tone(f,'sine',0.25,0.15,i*0.08));
+// 自己ベスト更新
+const seBest     = () => [523,659,784,1047,1319].forEach((f,i) => tone(f,'sine',0.3,0.18,i*0.10));
+// レベルアップファンファーレ
+const seLevelUp  = () => [[523,0],[659,.1],[784,.2],[1047,.3],[784,.5],[1047,.6],[1319,.7]].forEach(([f,d])=>tone(f,'triangle',0.3,0.2,d));
+// 復習正解
+const seReviewOk = () => { tone(1047,'sine',0.15,0.18); tone(1319,'sine',0.2,0.14,0.12); };
+
+// ===== TITLES =====
+const TITLES = [
+  {lv:1,  e:'🌱', n:'はじめての ちょうせんしゃ'},
+  {lv:3,  e:'✏️', n:'けいさん みならい'},
+  {lv:5,  e:'📐', n:'すうじ すきっこ'},
+  {lv:8,  e:'⚡', n:'はやおし チャレンジャー'},
+  {lv:10, e:'🔥', n:'まいにち れんしゅうちゅう'},
+  {lv:15, e:'💡', n:'けいさん めざめびと'},
+  {lv:20, e:'🎯', n:'まとあて めいじん'},
+  {lv:25, e:'🌟', n:'ひゃくます せんし'},
+  {lv:30, e:'🏅', n:'きろく こうしんしゃ'},
+  {lv:40, e:'🥈', n:'けいさん のうりょくしゃ'},
+  {lv:50, e:'🥇', n:'ひゃくます たつじん'},
+  {lv:60, e:'👑', n:'けいさん おう'},
+  {lv:80, e:'💎', n:'でんせつの ひゃくます'},
+  {lv:99, e:'🚀', n:'かみそく ひゃくます'},
+];
+const xpNeeded = lv => lv * 100;
+function titleAt(lv) { let t=TITLES[0]; for(const e of TITLES){if(lv>=e.lv)t=e;else break;} return t; }
+function lvFromXp(xp) { let lv=1,rem=xp; while(rem>=xpNeeded(lv)){rem-=xpNeeded(lv);lv++;} return{lv,rem,need:xpNeeded(lv)}; }
+
+// ===== SAVE =====
+const SAVE_KEY = 'hyakumas_save';
+function load() { try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null')||{xp:0,bests:{},history:{}};}catch{return{xp:0,bests:{},history:{}};} }
+function save(d) { localStorage.setItem(SAVE_KEY, JSON.stringify(d)); }
+function xpGain(correct,total,ms) { return Math.round((correct/total)*total*2) + (correct===total ? Math.max(0,50-Math.floor(ms/2000)) : 0); }
+const bkey = () => `${config.size}_${config.type}`;
+
+// ===== DARK MODE =====
+function applyDark(on) {
+  document.body.classList.toggle('dark', on);
+  document.getElementById('dark-toggle').textContent = on ? '☀️' : '🌙';
+  localStorage.setItem('hyakumas_dark', on?'1':'0');
+}
+document.getElementById('dark-toggle').addEventListener('click', () => { applyDark(!document.body.classList.contains('dark')); });
+if (localStorage.getItem('hyakumas_dark') === '1') applyDark(true);
+
+// ===== STATE =====
+let config = { size: 100, type: 'add' };
+let problem = {};
+let inputs = [];
+let activeCell = { row:0, col:0 };
+let timerInterval = null, startTime = null, elapsedMs = 0, timerRunning = false;
+let resultData = {};
+let reviewQueue = [], reviewIdx = 0, reviewInput = '', reviewProblem = null;
+
+// ===== SCREEN =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  if (id === 'top') renderTop();
+  if (id === 'graph') renderGraph();
+}
+
+// ===== TOP PLAYER =====
+function renderTop() {
+  const s = load();
+  const {lv,rem,need} = lvFromXp(s.xp);
+  const te = titleAt(lv);
+  document.getElementById('top-avatar').textContent = te.e;
+  document.getElementById('top-title').textContent = te.n;
+  document.getElementById('top-level').textContent = `Lv.${lv}`;
+  document.getElementById('top-xpbar').style.width = `${Math.round(rem/need*100)}%`;
+  document.getElementById('top-xplabel').textContent = `${rem} / ${need} XP`;
+  const lb = {add:'たし',sub:'ひき',mul:'かけ'};
+  document.getElementById('best-row').innerHTML = ['add','sub','mul'].map(t => {
+    const b = s.bests[`${config.size}_${t}`];
+    return `<div class="best-chip"><div class="bc-label">${config.size}マス ${lb[t]}</div><div class="bc-val">${b?formatTime(b):'—'}</div></div>`;
+  }).join('');
+}
+
+// ===== TOGGLES =====
+function setupToggle(gid, key) {
+  document.getElementById(gid).querySelectorAll('.btn-choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      resumeAudio();
+      document.getElementById(gid).querySelectorAll('.btn-choice').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      config[key] = btn.dataset.val;
+      renderTop();
+    });
+  });
+}
+setupToggle('size-group','size');
+setupToggle('type-group','type');
+renderTop();
+
+// ===== PROBLEM GEN =====
+function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a; }
+function makeNums(type, count) {
+  if (type === 'sub_top') return shuffle([10,11,12,13,14,15,16,17,18,19]).slice(0,count);
+  if (count === 10) return shuffle([0,1,2,3,4,5,6,7,8,9]);
+  return shuffle([1,2,3,4,5,6,7,8,9]).slice(0,count);
+}
+function genProblem() {
+  const sz = parseInt(config.size);
+  const rows = 10, cols = sz===100?10:sz===50?5:3;
+  const top  = config.type==='sub' ? makeNums('sub_top',cols) : makeNums('normal',cols);
+  const left = makeNums('normal', rows);
+  const answers = left.map(l => top.map(t => config.type==='add'?l+t:config.type==='sub'?t-l:l*t));
+  problem = {top,left,answers,rows,cols};
+  inputs = Array.from({length:rows},()=>Array(cols).fill(''));
+  activeCell = {row:0,col:0};
+}
+
+// ===== GRID =====
+function cellSize() { return Math.max(32,Math.min(46,Math.floor((document.getElementById('grid-wrapper').clientWidth||320-8)/(problem.cols+1)))); }
+function renderGrid() {
+  const tb = document.getElementById('grid-table');
+  tb.innerHTML = '';
+  const sz = cellSize();
+  const op = {add:'+',sub:'−',mul:'×'}[config.type];
+  const css = (s,fs) => `width:${s}px;height:${s}px;font-size:${fs}px`;
+
+  const hr = document.createElement('tr');
+  const co = document.createElement('td');
+  co.className='cell-header corner'; co.style.cssText=css(sz,Math.max(10,sz*.35)); co.textContent=op; hr.appendChild(co);
+  problem.top.forEach(n => { const td=document.createElement('td'); td.className='cell-header top'; td.style.cssText=css(sz,Math.max(11,sz*.38)); td.textContent=n; hr.appendChild(td); });
+  tb.appendChild(hr);
+
+  for(let r=0;r<problem.rows;r++){
+    const tr=document.createElement('tr');
+    const ld=document.createElement('td'); ld.className='cell-header left'; ld.style.cssText=css(sz,Math.max(11,sz*.38)); ld.textContent=problem.left[r]; tr.appendChild(ld);
+    for(let c=0;c<problem.cols;c++){
+      const td=document.createElement('td');
+      td.className='cell-input'+(inputs[r][c]?' filled':'');
+      td.style.cssText=css(sz,Math.max(11,sz*.38));
+      td.textContent=inputs[r][c]||'';
+      td.dataset.r=r; td.dataset.c=c;
+      if(r===activeCell.row&&c===activeCell.col) td.classList.add('active');
+      td.addEventListener('click',()=>{ resumeAudio(); activeCell={row:r,col:c}; highlight(); if(!timerRunning)startTimer(); });
+      tr.appendChild(td);
+    }
+    tb.appendChild(tr);
+  }
+  updateInfo();
+}
+function highlight() {
+  document.querySelectorAll('#grid-table .cell-input').forEach(td=>td.classList.remove('active'));
+  const td=document.querySelector(`#grid-table .cell-input[data-r="${activeCell.row}"][data-c="${activeCell.col}"]`);
+  if(td){td.classList.add('active');td.scrollIntoView({block:'nearest',inline:'nearest'});}
+}
+function updateCell(r,c) {
+  const td=document.querySelector(`#grid-table .cell-input[data-r="${r}"][data-c="${c}"]`);
+  if(!td)return;
+  td.textContent=inputs[r][c]||'';
+  td.classList.toggle('filled',!!inputs[r][c]);
+}
+function updateInfo() {
+  const f=inputs.flat().filter(v=>v!=='').length;
+  document.getElementById('game-info').textContent=`${f} / ${problem.rows*problem.cols} にゅうりょく`;
+}
+
+// ===== TIMER =====
+function startTimer() {
+  timerRunning=true; startTime=Date.now()-elapsedMs;
+  timerInterval=setInterval(()=>{ document.getElementById('timer-display').textContent=formatTime(Date.now()-startTime); },100);
+  document.getElementById('timer-display').classList.add('running');
+}
+function stopTimer() {
+  clearInterval(timerInterval); timerRunning=false; elapsedMs=Date.now()-startTime;
+  document.getElementById('timer-display').classList.remove('running');
+}
+function formatTime(ms) {
+  const m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000),d=Math.floor((ms%1000)/100);
+  return `${m}:${String(s).padStart(2,'0')}.${d}`;
+}
+
+// ===== INPUT =====
+function handleInput(n) {
+  resumeAudio();
+  if(!timerRunning) startTimer();
+  const {row,col}=activeCell;
+
+  if(n==='del'){
+    if(inputs[row][col].length>0){
+      seDel();
+      inputs[row][col]=inputs[row][col].slice(0,-1);
+      updateCell(row,col); updateInfo();
+    } else {
+      // 空セルでBSなら前のセルへ戻る
+      seDel();
+      movePrev();
+    }
+    return;
+  }
+
+  const curr=inputs[row][col];
+  if(curr.length>=3)return;
+  seKey();
+  const next=curr+n;
+  inputs[row][col]=next;
+  updateCell(row,col); updateInfo();
+
+  const ans=problem.answers[row][col];
+  if(next.length>=String(ans).length) moveNext();
+}
+
+function moveNext() {
+  let {row,col}=activeCell;
+  col++; if(col>=problem.cols){col=0;row++;if(row>=problem.rows)row=0;}
+  activeCell={row,col}; highlight();
+  if(inputs.flat().filter(v=>v!=='').length===problem.rows*problem.cols) setTimeout(finishGame,300);
+}
+function movePrev() {
+  let {row,col}=activeCell;
+  col--; if(col<0){col=problem.cols-1;row--;if(row<0)row=problem.rows-1;}
+  activeCell={row,col}; highlight();
+}
+
+document.querySelectorAll('#numpad .numpad-btn').forEach(btn => btn.addEventListener('click', ()=>handleInput(btn.dataset.n)));
+
+// ===== GAME FLOW =====
+document.getElementById('btn-start').addEventListener('click', ()=>{
+  resumeAudio(); genProblem(); elapsedMs=0; timerRunning=false;
+  showScreen('game');
+  requestAnimationFrame(()=>{ renderGrid(); highlight(); });
+  document.getElementById('timer-display').textContent='0:00.0';
+  document.getElementById('timer-display').classList.remove('running');
+});
+document.getElementById('btn-end').addEventListener('click', ()=>{ if(confirm('終了しますか？'))finishGame(); });
+
+function finishGame() {
+  stopTimer(); seComplete(); calcResult(); renderResult(); showScreen('result');
+}
+
+// ===== RESULT =====
+function calcResult() {
+  let correct=0; const mistakes=[];
+  for(let r=0;r<problem.rows;r++) for(let c=0;c<problem.cols;c++){
+    const uv=parseInt(inputs[r][c]), ans=problem.answers[r][c];
+    if(!isNaN(uv)&&uv===ans) correct++;
+    else mistakes.push({row:r,col:c,correct:ans,user:isNaN(uv)?null:uv});
+  }
+  resultData={time:elapsedMs,correct,total:problem.rows*problem.cols,mistakes};
+}
+
+function getGrade(correct,total,ms){
+  const p=correct/total;
+  if(p===1&&ms<60000) return{e:'🏆',l:'かんぺき！',bg:'#fef9c3',co:'#854d0e'};
+  if(p>=0.9) return{e:'⭐',l:'すごい！',bg:'#f0fdf4',co:'#166534'};
+  if(p>=0.7) return{e:'👍',l:'よくできた',bg:'#eff6ff',co:'#1e40af'};
+  return{e:'💪',l:'がんばれ！',bg:'#fff7ed',co:'#9a3412'};
+}
+
+function renderResult() {
+  const {time,correct,total,mistakes}=resultData;
+  const g=getGrade(correct,total,time);
+  const ge=document.getElementById('result-grade');
+  ge.textContent=g.e+' '+g.l; ge.style.background=g.bg; ge.style.color=g.co;
+  document.getElementById('result-time').textContent=formatTime(time);
+  document.getElementById('result-score').innerHTML=`<span class="correct-count">○ ${correct}</span> / <span class="wrong-count">✗ ${total-correct}</span>`;
+
+  // XP & BEST
+  const s=load(); if(!s.history)s.history={};
+  const xp=xpGain(correct,total,time);
+  const oldLv=lvFromXp(s.xp).lv;
+  s.xp+=xp;
+  const newLv=lvFromXp(s.xp).lv;
+  const key=bkey();
+  const prev=s.bests[key];
+  const isBest=correct===total&&(!prev||time<prev);
+  if(isBest){
+    s.bests[key]=time;
+    if(!s.history[key])s.history[key]=[];
+    s.history[key].push({t:time,d:Date.now()});
+    if(s.history[key].length>50)s.history[key].shift();
+  }
+  save(s);
+
+  document.getElementById('xp-gain').textContent=`+${xp} XP`;
+  const banner=document.getElementById('new-best-banner');
+  if(isBest){banner.textContent=`🏅 じこベスト こうしん！ ${formatTime(time)}`;banner.classList.add('show');setTimeout(seBest,200);}
+  else banner.classList.remove('show');
+
+  if(newLv>oldLv){
+    const te=titleAt(newLv),pe=titleAt(oldLv);
+    document.getElementById('lu-sub').textContent=`Lv.${newLv} になった！`;
+    document.getElementById('lu-newtitle').textContent=te.n!==pe.n?`称号：${te.e} ${te.n}`:'';
+    setTimeout(()=>{ document.getElementById('levelup-overlay').classList.add('show'); seLevelUp(); }, isBest?1000:600);
+  }
+
+  const rb=document.getElementById('btn-review');
+  if(mistakes.length===0){rb.disabled=true;rb.style.opacity='0.3';rb.textContent='ミスなし 🎉';}
+  else{rb.disabled=false;rb.style.opacity='1';rb.textContent=`ミスだけやる 🔥 (${mistakes.length}問)`;}
+
+  // Result grid
+  const tb=document.getElementById('result-grid-table'); tb.innerHTML='';
+  const op={add:'+',sub:'−',mul:'×'}[config.type];
+  const hr=document.createElement('tr');
+  const co=document.createElement('td'); co.className='rh corner'; co.textContent=op; hr.appendChild(co);
+  problem.top.forEach(n=>{const td=document.createElement('td');td.className='rh top';td.textContent=n;hr.appendChild(td);});
+  tb.appendChild(hr);
+  for(let r=0;r<problem.rows;r++){
+    const tr=document.createElement('tr');
+    const ld=document.createElement('td');ld.className='rh left';ld.textContent=problem.left[r];tr.appendChild(ld);
+    for(let c=0;c<problem.cols;c++){
+      const td=document.createElement('td');
+      const uv=parseInt(inputs[r][c]),ans=problem.answers[r][c];
+      if(inputs[r][c]===''){td.className='cell-empty';td.textContent='—';}
+      else if(uv===ans){td.className='cell-ok';td.textContent=ans;}
+      else{td.className='cell-wrong';td.innerHTML=`${uv}<span class="correct-ans">→${ans}</span>`;}
+      tr.appendChild(td);
+    }
+    tb.appendChild(tr);
+  }
+}
+
+document.getElementById('btn-retry').addEventListener('click',()=>{
+  inputs=Array.from({length:problem.rows},()=>Array(problem.cols).fill(''));
+  activeCell={row:0,col:0}; elapsedMs=0; timerRunning=false;
+  showScreen('game');
+  requestAnimationFrame(()=>{renderGrid();highlight();});
+  document.getElementById('timer-display').textContent='0:00.0';
+  document.getElementById('timer-display').classList.remove('running');
+});
+document.getElementById('btn-new').addEventListener('click',()=>showScreen('top'));
+document.getElementById('btn-review').addEventListener('click',startReview);
+document.getElementById('btn-review-back').addEventListener('click',()=>showScreen('result'));
+
+// ===== REVIEW =====
+function startReview(){
+  reviewQueue=shuffle([...resultData.mistakes]); reviewIdx=0; reviewInput='';
+  showScreen('review'); showReviewProblem();
+}
+function showReviewProblem(){
+  if(reviewIdx>=reviewQueue.length){showFeedback('🎉',2000);seComplete();setTimeout(()=>showScreen('result'),2000);return;}
+  reviewProblem=reviewQueue[reviewIdx];
+  const {row,col}=reviewProblem;
+  const op={add:'+',sub:'−',mul:'×'}[config.type];
+  reviewInput='';
+  document.getElementById('review-progress').textContent=`${reviewIdx+1} / ${reviewQueue.length} 問`;
+  updateReviewEq();
+}
+function handleReviewInput(n){
+  resumeAudio();
+  if(n==='del'){seDel();reviewInput=reviewInput.slice(0,-1);updateReviewEq();return;}
+  seKey(); reviewInput+=n; updateReviewEq();
+  const ans=reviewProblem.correct;
+  if(reviewInput.length>=String(ans).length){
+    if(parseInt(reviewInput)===ans){seReviewOk();showFeedback('⭕',600);reviewIdx++;setTimeout(showReviewProblem,700);}
+    else{seWrong();showFeedback('❌',800);reviewInput='';setTimeout(updateReviewEq,900);}
+  }
+}
+function updateReviewEq(){
+  const {row,col}=reviewProblem;
+  const l=problem.left[row],t=problem.top[col];
+  const op={add:'+',sub:'−',mul:'×'}[config.type];
+  const a=config.type==='sub',lv=a?t:l,rv=a?l:t;
+  document.getElementById('review-eq').innerHTML=`${lv} ${op} ${rv} = <span class="ans-box">${reviewInput||'　'}</span>`;
+}
+document.querySelectorAll('.review-numpad .numpad-btn').forEach(btn=>btn.addEventListener('click',()=>handleReviewInput(btn.dataset.rn)));
+
+// ===== GRAPH =====
+let graphFilter = '100_add';
+const GF = [
+  {k:'100_add',l:'100たし'},{k:'100_sub',l:'100ひき'},{k:'100_mul',l:'100かけ'},
+  {k:'50_add', l:'50たし'}, {k:'50_sub', l:'50ひき'}, {k:'50_mul', l:'50かけ'},
+  {k:'30_add', l:'30たし'}, {k:'30_sub', l:'30ひき'}, {k:'30_mul', l:'30かけ'},
+];
+document.getElementById('btn-show-graph').addEventListener('click',()=>{graphFilter=bkey();showScreen('graph');});
+document.getElementById('btn-graph-back').addEventListener('click',()=>showScreen('top'));
+
+function renderGraph(){
+  const fe=document.getElementById('graph-filter');
+  fe.innerHTML=GF.map(f=>`<button class="gf-btn ${f.k===graphFilter?'active':''}" data-k="${f.k}">${f.l}</button>`).join('');
+  fe.querySelectorAll('.gf-btn').forEach(btn=>btn.addEventListener('click',()=>{graphFilter=btn.dataset.k;renderGraph();}));
+
+  const s=load();
+  const hist=((s.history||{})[graphFilter])||[];
+  const canvas=document.getElementById('graph-canvas');
+  const empty=document.getElementById('graph-empty');
+
+  if(hist.length<2){
+    canvas.style.display='none'; empty.style.display='block';
+    empty.textContent=hist.length===0?'まだきろくがありません':'きろくが1件のみ（2件以上でグラフ表示）';
+    return;
+  }
+  canvas.style.display='block'; empty.style.display='none';
+
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-32, H=220;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+
+  const dark=document.body.classList.contains('dark');
+  const pad={top:20,right:20,bottom:48,left:62};
+  const gW=W-pad.left-pad.right, gH=H-pad.top-pad.bottom;
+  const times=hist.map(h=>h.t);
+  const minT=Math.min(...times), maxT=Math.max(...times), range=maxT-minT||1000;
+
+  ctx.fillStyle=dark?'#1e293b':'#ffffff'; ctx.fillRect(0,0,W,H);
+
+  // grid lines & y-axis labels
+  ctx.strokeStyle=dark?'#334155':'#e2e8f0'; ctx.lineWidth=1;
+  ctx.fillStyle=dark?'#94a3b8':'#64748b';
+  ctx.font='10px M PLUS Rounded 1c,sans-serif'; ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const y=pad.top+(gH/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+gW,y); ctx.stroke();
+    const ms=maxT-(range/4)*i;
+    ctx.fillText(formatTime(Math.round(ms/100)*100), pad.left-6, y+4);
+  }
+
+  // points
+  const pts=hist.map((h,i)=>({ x:pad.left+(gW/(hist.length-1))*i, y:pad.top+gH-((h.t-minT)/range)*gH }));
+
+  // fill gradient
+  const gr=ctx.createLinearGradient(0,pad.top,0,pad.top+gH);
+  gr.addColorStop(0, dark?'rgba(96,165,250,0.3)':'rgba(59,110,248,0.2)');
+  gr.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pad.top+gH);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,pad.top+gH); ctx.closePath();
+  ctx.fillStyle=gr; ctx.fill();
+
+  // line
+  ctx.beginPath(); ctx.strokeStyle=dark?'#60a5fa':'#3b6ef8'; ctx.lineWidth=2.5; ctx.lineJoin='round';
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)); ctx.stroke();
+
+  // dots
+  pts.forEach((p,i)=>{
+    const best=hist[i].t===minT;
+    ctx.beginPath(); ctx.arc(p.x,p.y,best?6:4,0,Math.PI*2);
+    ctx.fillStyle=best?'#f59e0b':(dark?'#60a5fa':'#3b6ef8'); ctx.fill();
+    ctx.strokeStyle=dark?'#1e293b':'#ffffff'; ctx.lineWidth=2; ctx.stroke();
+  });
+
+  // x-axis dates
+  ctx.fillStyle=dark?'#94a3b8':'#64748b'; ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(hist.length/6));
+  hist.forEach((h,i)=>{
+    if(i%step===0||i===hist.length-1){
+      const d=new Date(h.d);
+      ctx.fillText(`${d.getMonth()+1}/${d.getDate()}`, pts[i].x, pad.top+gH+18);
+    }
+  });
+
+  // y-axis title
+  ctx.save(); ctx.translate(12,pad.top+gH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle=dark?'#94a3b8':'#64748b'; ctx.textAlign='center';
+  ctx.fillText('タイム',0,0); ctx.restore();
+}
+
+// ===== FEEDBACK =====
+function showFeedback(emoji,dur){
+  const el=document.getElementById('feedback-msg');
+  el.textContent=emoji; el.className='feedback-msg show';
+  setTimeout(()=>{el.classList.remove('show');el.classList.add('hide');setTimeout(()=>el.className='feedback-msg',300);},dur);
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', e=>{
+  resumeAudio();
+  const scr=document.querySelector('.screen.active')?.id;
+  if(scr==='screen-game'){
+    if(e.key>='0'&&e.key<='9'){e.preventDefault();handleInput(e.key);}
+    else if(e.key==='Backspace'){e.preventDefault();handleInput('del');}
+    else if(e.key==='Enter') moveNext();
+  }
+  if(scr==='screen-review'){
+    if(e.key>='0'&&e.key<='9'){e.preventDefault();handleReviewInput(e.key);}
+    else if(e.key==='Backspace'){e.preventDefault();handleReviewInput('del');}
+  }
+});
+</script>
+</body>
+</html>
