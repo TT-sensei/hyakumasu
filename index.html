@@ -179,6 +179,100 @@
   @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes popIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
   .screen.active { animation: slideIn 0.25s ease; }
+
+
+  /* ===== TABLET LAYOUT (768px+) ===== */
+  @media (min-width: 768px) {
+    body { justify-content: flex-start; }
+
+    #screen-game {
+      height: 100dvh;
+      max-width: 100%;
+      padding: 10px;
+      gap: 10px;
+      display: grid !important;
+      grid-template-rows: auto 1fr;
+      grid-template-columns: 1fr 200px;
+      grid-template-areas:
+        "header header"
+        "grid   numpad";
+    }
+
+    #screen-game .game-header { grid-area: header; }
+
+    #screen-game .grid-wrapper {
+      grid-area: grid;
+      overflow: hidden;   /* スクロールさせない */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* グリッドをラッパーいっぱいに広げる */
+    #screen-game .grid-wrapper .grid-table {
+      width: 100%;
+      height: 100%;
+    }
+
+    #screen-game .numpad {
+      grid-area: numpad;
+      display: flex !important;
+      flex-direction: column;
+      gap: 6px;
+      height: 100%;
+      grid-template-columns: unset !important;
+    }
+
+    /* テンキーを縦3x4に並べ直す */
+    #screen-game .numpad {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      align-content: stretch;
+    }
+
+    #screen-game .numpad .numpad-btn {
+      padding: 0;
+      font-size: 1.5rem;
+    }
+
+    #screen-game .numpad .numpad-btn.zero {
+      grid-column: span 2;
+    }
+
+    /* スクリーン全体もタブレットはフル幅 */
+    #screen-top, #screen-result, #screen-review, #screen-graph {
+      max-width: 720px;
+    }
+  }
+
+  /* ===== PRINT ===== */
+  #print-area { display: none; }
+  .btn-print { width: 100%; padding: 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--card); font-family: inherit; font-size: 0.9rem; font-weight: 800; color: var(--text-light); cursor: pointer; transition: all 0.15s; }
+  .btn-print:hover { border-color: var(--primary); color: var(--primary); }
+  @media print {
+    @page { size: A4 portrait; margin: 10mm 12mm; }
+    body > * { display: none !important; }
+    body > #print-area { display: block !important; font-family: sans-serif; }
+    #print-area * { display: revert; }
+    .print-sheet { page-break-after: always; }
+    .print-sheet:last-child { page-break-after: avoid; }
+    .print-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5mm; border-bottom: 1.5px solid #333; padding-bottom: 3mm; }
+    .ph-title { font-size: 15pt; font-weight: 900; }
+    .ph-title span { color: #3b6ef8; }
+    .ph-meta { font-size: 9.5pt; display: flex; gap: 6mm; align-items: flex-end; }
+    .ph-field { display: inline-block; border-bottom: 1px solid #333; min-width: 28mm; margin-left: 2mm; }
+    .ph-answer-label { font-size: 8.5pt; font-weight: 900; color: #c00; border: 1px solid #c00; padding: 0.5mm 2.5mm; border-radius: 3px; }
+    .print-table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    .print-table td { border: 1px solid #bbb; text-align: center; font-weight: 800; vertical-align: middle; padding: 0; }
+    .print-table.cols10 td { height: 17mm; font-size: 12.5pt; }
+    .print-table.cols5  td { height: 21mm; font-size: 14pt; }
+    .print-table.cols3  td { height: 25mm; font-size: 15pt; }
+    .print-table .ph { background: #dbeafe !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-table .ph.corner { background: #3b6ef8 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-table .answer-cell { color: #1e40af; }
+    .print-footer { margin-top: 3mm; font-size: 7.5pt; color: #999; text-align: right; }
+  }
 </style>
 </head>
 <body>
@@ -216,6 +310,7 @@
   </div>
   <button class="btn-start" id="btn-start">はじめる ▶</button>
   <button class="btn-graph" id="btn-show-graph">📈 きろくグラフを見る</button>
+  <button class="btn-print" id="btn-print">🖨️ プリントする</button>
 </div>
 
 <!-- GAME SCREEN -->
@@ -305,6 +400,9 @@
   </div>
   <div style="font-size:0.75rem; color:var(--text-light); text-align:center;">全問正解したときのタイムを記録しています（最大50件）</div>
 </div>
+
+<!-- PRINT AREA (hidden, shown only on print) -->
+<div id="print-area"></div>
 
 <!-- Level up overlay -->
 <div class="levelup-overlay" id="levelup-overlay">
@@ -467,7 +565,19 @@ function genProblem() {
 }
 
 // ===== GRID =====
-function cellSize() { return Math.max(32,Math.min(46,Math.floor((document.getElementById('grid-wrapper').clientWidth||320-8)/(problem.cols+1)))); }
+function cellSize() {
+  const wrapper = document.getElementById('grid-wrapper');
+  const isTablet = window.innerWidth >= 768;
+  if (isTablet) {
+    // タブレット：グリッドラッパーの縦横両方を考慮してセルサイズを決める
+    const availW = wrapper.clientWidth || 500;
+    const availH = wrapper.clientHeight || 400;
+    const byW = Math.floor((availW - 4) / (problem.cols + 1));
+    const byH = Math.floor((availH - 4) / (problem.rows + 1));
+    return Math.max(28, Math.min(byW, byH, 54));
+  }
+  return Math.max(32, Math.min(46, Math.floor((wrapper.clientWidth || 320) / (problem.cols + 1))));
+}
 function renderGrid() {
   const tb = document.getElementById('grid-table');
   tb.innerHTML = '';
@@ -577,7 +687,7 @@ document.querySelectorAll('#numpad .numpad-btn').forEach(btn => btn.addEventList
 document.getElementById('btn-start').addEventListener('click', ()=>{
   resumeAudio(); genProblem(); elapsedMs=0; timerRunning=false;
   showScreen('game');
-  requestAnimationFrame(()=>{ renderGrid(); highlight(); });
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ renderGrid(); highlight(); }));
   document.getElementById('timer-display').textContent='0:00.0';
   document.getElementById('timer-display').classList.remove('running');
 });
@@ -812,6 +922,139 @@ function showFeedback(emoji,dur){
   el.textContent=emoji; el.className='feedback-msg show';
   setTimeout(()=>{el.classList.remove('show');el.classList.add('hide');setTimeout(()=>el.className='feedback-msg',300);},dur);
 }
+
+
+// ===== PRINT =====
+document.getElementById('btn-print').addEventListener('click', () => {
+  resumeAudio();
+  if (!problem.top || !problem.top.length) genProblem();
+  // 新しいウィンドウで印刷（確実に印刷できる）
+  openPrintWindow();
+});
+
+function openPrintWindow() {
+  const op = {add:'+', sub:'−', mul:'×'}[config.type];
+  const opName = {add:'たしざん', sub:'ひきざん', mul:'かけざん'}[config.type];
+  const colClass = `cols${problem.cols}`;
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+
+  function makeSheet(isAnswer) {
+    const label = isAnswer ? '<span style="font-size:8.5pt;font-weight:900;color:#c00;border:1px solid #c00;padding:1mm 2.5mm;border-radius:3px;">こたえ</span>' : '';
+    let html = `<div style="page-break-after:${isAnswer?'avoid':'always'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:5mm;border-bottom:1.5px solid #333;padding-bottom:3mm;">
+        <div style="font-size:15pt;font-weight:900;">100マス<span style="color:#3b6ef8">計算</span>　${opName} ${problem.rows*problem.cols}マス ${label}</div>
+        <div style="font-size:9pt;display:flex;gap:6mm;align-items:flex-end;">
+          <div>なまえ：<span style="display:inline-block;border-bottom:1px solid #333;min-width:32mm;">&nbsp;</span></div>
+          <div>じかん：<span style="display:inline-block;border-bottom:1px solid #333;min-width:12mm;">&nbsp;</span>ふん<span style="display:inline-block;border-bottom:1px solid #333;min-width:12mm;">&nbsp;</span>びょう</div>
+          <div>${dateStr}</div>
+        </div>
+      </div>
+      <table style="border-collapse:collapse;width:100%;table-layout:fixed;">`;
+
+    // header row
+    html += '<tr>';
+    html += `<td style="${cellStyle(true,true)}">${op}</td>`;
+    problem.top.forEach(n => { html += `<td style="${cellStyle(true,false)}">${n}</td>`; });
+    html += '</tr>';
+
+    for (let r = 0; r < problem.rows; r++) {
+      html += '<tr>';
+      html += `<td style="${cellStyle(true,false)}">${problem.left[r]}</td>`;
+      for (let c = 0; c < problem.cols; c++) {
+        if (isAnswer) {
+          html += `<td style="${cellStyle(false,false)}color:#1e40af;">${problem.answers[r][c]}</td>`;
+        } else {
+          html += `<td style="${cellStyle(false,false)}">&nbsp;</td>`;
+        }
+      }
+      html += '</tr>';
+    }
+    html += `</table>
+      <div style="margin-top:3mm;font-size:7.5pt;color:#999;text-align:right;">100マス計算アプリ</div>
+    </div>`;
+    return html;
+  }
+
+  function cellStyle(isHeader, isCorner) {
+    const cols = problem.cols;
+    const h = cols===10?'17mm':cols===5?'21mm':'25mm';
+    const fs = cols===10?'12.5pt':cols===5?'14pt':'15pt';
+    let s = `border:1px solid #bbb;text-align:center;font-weight:800;vertical-align:middle;padding:0;height:${h};font-size:${fs};`;
+    if (isCorner) s += 'background:#3b6ef8;color:white;';
+    else if (isHeader) s += 'background:#dbeafe;';
+    return s;
+  }
+
+  const html = `<!DOCTYPE html><html lang="ja"><head>
+    <meta charset="UTF-8">
+    <title>100マス計算 プリント</title>
+    <style>
+      @page { size: A4 portrait; margin: 10mm 12mm; }
+      body { font-family: 'M PLUS Rounded 1c', 'Hiragino Maru Gothic Pro', sans-serif; margin: 0; }
+    </style>
+  </head><body>
+    ${makeSheet(false)}
+    ${makeSheet(true)}
+    <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=800,height=600');
+  if (w) { w.document.write(html); w.document.close(); }
+  else { alert('ポップアップをゆるかしてください'); }
+}
+
+function buildPrintArea(showAnswers) {
+  const area = document.getElementById('print-area');
+  const op = {add:'+', sub:'−', mul:'×'}[config.type];
+  const opName = {add:'たしざん', sub:'ひきざん', mul:'かけざん'}[config.type];
+  const colClass = `cols${problem.cols}`;
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+
+  function makeSheet(isAnswer) {
+    const label = isAnswer ? '<span class="ph-answer-label">こたえ</span>' : '';
+    let html = `<div class="print-sheet">
+      <div class="print-header">
+        <div class="ph-title">100マス<span>計算</span>　${opName} ${problem.rows * problem.cols}マス ${label}</div>
+        <div class="ph-meta">
+          <div>なまえ：<span class="ph-field">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+          <div>じかん：<span class="ph-field">&nbsp;&nbsp;&nbsp;&nbsp;</span>ふん<span class="ph-field">&nbsp;&nbsp;&nbsp;&nbsp;</span>びょう</div>
+          <div>${dateStr}</div>
+        </div>
+      </div>
+      <table class="print-table ${colClass}">
+        <tr>
+          <td class="ph corner">${op}</td>`;
+    problem.top.forEach(n => { html += `<td class="ph">${n}</td>`; });
+    html += '</tr>';
+    for (let r = 0; r < problem.rows; r++) {
+      html += `<tr><td class="ph">${problem.left[r]}</td>`;
+      for (let c = 0; c < problem.cols; c++) {
+        if (isAnswer) {
+          html += `<td class="answer-cell">${problem.answers[r][c]}</td>`;
+        } else {
+          html += `<td>&nbsp;</td>`;
+        }
+      }
+      html += '</tr>';
+    }
+    html += `</table>
+      <div class="print-footer">100マス計算アプリ</div>
+    </div>`;
+    return html;
+  }
+
+  area.innerHTML = makeSheet(false) + makeSheet(true);
+}
+
+
+// リサイズ・回転時にグリッド再描画
+window.addEventListener('resize', () => {
+  if (document.querySelector('.screen.active')?.id === 'screen-game') {
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ renderGrid(); highlight(); }));
+  }
+});
 
 // ===== KEYBOARD =====
 document.addEventListener('keydown', e=>{
