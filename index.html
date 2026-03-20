@@ -49,11 +49,11 @@
     font-family: 'M PLUS Rounded 1c', 'Nunito', sans-serif;
     background: var(--bg); color: var(--text);
     min-height: 100dvh; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; overflow: hidden;
+    align-items: center; justify-content: flex-start; overflow-y: auto; overflow-x: hidden;
     transition: background 0.3s, color 0.3s;
   }
 
-  .screen { display: none; width: 100%; max-width: 640px; padding: 20px 16px; }
+  .screen { display: none; width: 100%; max-width: 640px; padding: 20px 16px 40px; }
   .screen.active { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 
   .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
@@ -247,14 +247,13 @@
   }
 
   /* ===== PRINT ===== */
-  #print-area { display: none; }
+  #print-area { display: none !important; position: absolute; left: -9999px; }
   .btn-print { width: 100%; padding: 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--card); font-family: inherit; font-size: 0.9rem; font-weight: 800; color: var(--text-light); cursor: pointer; transition: all 0.15s; }
   .btn-print:hover { border-color: var(--primary); color: var(--primary); }
   @media print {
     @page { size: A4 portrait; margin: 10mm 12mm; }
     body > * { display: none !important; }
     body > #print-area { display: block !important; font-family: sans-serif; }
-    #print-area * { display: revert; }
     .print-sheet { page-break-after: always; }
     .print-sheet:last-child { page-break-after: avoid; }
     .print-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5mm; border-bottom: 1.5px solid #333; padding-bottom: 3mm; }
