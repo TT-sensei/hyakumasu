@@ -615,6 +615,7 @@ let problem = {};
 let inputs = [];
 let activeCell = { row:0, col:0 };
 let timerInterval = null, startTime = null, elapsedMs = 0, timerRunning = false;
+let finishTimer = null, gameFinished = false;
 let resultData = {};
 let reviewQueue = [], reviewIdx = 0, reviewInput = '', reviewProblem = null;
 
@@ -778,15 +779,27 @@ function handleInput(n) {
   inputs[row][col]=next;
   updateCell(row,col); updateInfo();
 
+  // 最後の入力直後に、次のマスへ移動する前でも完了を検知する。
+  if(inputs.flat().every(v=>v!=='')){
+    scheduleFinish();
+    return;
+  }
+
   const ans=problem.answers[row][col];
   if(next.length>=String(ans).length) moveNext();
+}
+
+function scheduleFinish(){
+  clearTimeout(finishTimer);
+  finishTimer=setTimeout(()=>{
+    if(!gameFinished && document.querySelector('.screen.active')?.id==='screen-game') finishGame();
+  },300);
 }
 
 function moveNext() {
   let {row,col}=activeCell;
   col++; if(col>=problem.cols){col=0;row++;if(row>=problem.rows)row=0;}
   activeCell={row,col}; highlight();
-  if(inputs.flat().filter(v=>v!=='').length===problem.rows*problem.cols) setTimeout(finishGame,300);
 }
 function movePrev() {
   let {row,col}=activeCell;
@@ -798,7 +811,8 @@ document.querySelectorAll('#numpad .numpad-btn').forEach(btn => btn.addEventList
 
 // ===== GAME FLOW =====
 document.getElementById('btn-start').addEventListener('click', ()=>{
-  resumeAudio(); genProblem(); elapsedMs=0; timerRunning=false;
+  resumeAudio(); clearTimeout(finishTimer); gameFinished=false;
+  genProblem(); elapsedMs=0; timerRunning=false;
   showScreen('game');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ renderGrid(); highlight(); }));
   document.getElementById('timer-display').textContent='0:00.0';
@@ -807,6 +821,9 @@ document.getElementById('btn-start').addEventListener('click', ()=>{
 document.getElementById('btn-end').addEventListener('click', ()=>{ if(confirm('終了しますか？'))finishGame(); });
 
 function finishGame() {
+  if(gameFinished)return;
+  gameFinished=true;
+  clearTimeout(finishTimer);
   stopTimer(); seComplete(); calcResult(); renderResult(); showScreen('result');
 }
 
@@ -898,6 +915,7 @@ function renderResult() {
 }
 
 document.getElementById('btn-retry').addEventListener('click',()=>{
+  clearTimeout(finishTimer); gameFinished=false;
   inputs=Array.from({length:problem.rows},()=>Array(problem.cols).fill(''));
   activeCell={row:0,col:0}; elapsedMs=0; timerRunning=false;
   showScreen('game');
