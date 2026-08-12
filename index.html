@@ -779,14 +779,18 @@ function handleInput(n) {
   inputs[row][col]=next;
   updateCell(row,col); updateInfo();
 
-  // 最後の入力直後に、次のマスへ移動する前でも完了を検知する。
+  const ans=problem.answers[row][col];
+  // 答えの桁数がそろうまでは、次のマスへ進めない。
+  // 特に最後のマスが二桁以上でも、1桁目で終了しないようにする。
+  if(next.length < String(ans).length) return;
+
+  // 桁数がそろった後で、全マス完了を判定する。
   if(inputs.flat().every(v=>v!=='')){
     scheduleFinish();
     return;
   }
 
-  const ans=problem.answers[row][col];
-  if(next.length>=String(ans).length) moveNext();
+  moveNext();
 }
 
 function scheduleFinish(){
