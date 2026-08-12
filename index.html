@@ -273,10 +273,9 @@
     .best-chip .bc-label { font-size: .56rem; }
   }
 
-  /* ===== TABLET LAYOUT (768px+) ===== */
-  @media (min-width: 768px) {
-    body { justify-content: flex-start; }
-
+  /* ===== TABLET / PC INPUT LAYOUT ===== */
+  /* 幅600px以上では、テンキーを下ではなく右側に固定する。 */
+  @media (min-width: 600px) {
     #screen-game {
       height: 100dvh;
       max-width: 100%;
@@ -284,58 +283,46 @@
       gap: 10px;
       display: grid !important;
       grid-template-rows: auto 1fr;
-      grid-template-columns: 1fr 200px;
+      grid-template-columns: minmax(0, 1fr) 210px;
       grid-template-areas:
         "header header"
         "grid   numpad";
     }
-
     #screen-game .game-header { grid-area: header; }
-
     #screen-game .grid-wrapper {
       grid-area: grid;
-      overflow: hidden;   /* スクロールさせない */
+      min-width: 0;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-
-    /* グリッドをラッパーいっぱいに広げる */
     #screen-game .grid-wrapper .grid-table {
       width: 100%;
       height: 100%;
     }
-
     #screen-game .numpad {
       grid-area: numpad;
-      display: flex !important;
-      flex-direction: column;
-      gap: 6px;
-      height: 100%;
-      grid-template-columns: unset !important;
-    }
-
-    /* テンキーを縦3x4に並べ直す */
-    #screen-game .numpad {
       display: grid !important;
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(4, 1fr);
+      gap: 8px;
+      height: 100%;
       align-content: stretch;
     }
-
     #screen-game .numpad .numpad-btn {
+      min-height: 60px;
       padding: 0;
-      font-size: 1.5rem;
+      font-size: 1.55rem;
+      touch-action: manipulation;
     }
+    #screen-game .numpad .numpad-btn.zero { grid-column: span 2; }
+  }
 
-    #screen-game .numpad .numpad-btn.zero {
-      grid-column: span 2;
-    }
-
-    /* スクリーン全体もタブレットはフル幅 */
-    #screen-top, #screen-result, #screen-review, #screen-graph {
-      max-width: 720px;
-    }
+  /* ===== TABLET LAYOUT (768px+) ===== */
+  @media (min-width: 768px) {
+    body { justify-content: flex-start; }
+    #screen-top, #screen-result, #screen-review, #screen-graph { max-width: 720px; }
   }
 
   /* ===== PRINT ===== */
