@@ -870,7 +870,7 @@ function renderResult() {
   if(completed){
     if(!s.history[key])s.history[key]=[];
     s.history[key].push({
-      t:time,d:Date.now(),a:correct/total,c:correct,w:total-c
+      t:time,d:Date.now(),a:correct/total,c:correct,w:total-correct
     });
     if(s.history[key].length>50)s.history[key].shift();
   }
