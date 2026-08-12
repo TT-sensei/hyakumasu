@@ -97,7 +97,7 @@
   .btn-end:active { transform: scale(0.95); }
 
   .grid-wrapper { width: 100%; flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); }
-  .grid-table { border-collapse: collapse; width: 100%; }
+  .grid-table { border-collapse: collapse; width: max-content; }
   .grid-table td { border: 1px solid var(--border); text-align: center; font-weight: 800; user-select: none; -webkit-user-select: none; }
   .grid-table .cell-header { background: var(--header-cell); color: var(--primary); position: sticky; }
   .grid-table .cell-header.top { top: 0; z-index: 3; }
@@ -298,8 +298,8 @@
       justify-content: center;
     }
     #screen-game .grid-wrapper .grid-table {
-      width: 100%;
-      height: 100%;
+      width: max-content;
+      height: max-content;
     }
     #screen-game .numpad {
       grid-area: numpad;
@@ -584,7 +584,7 @@ function load() {
   } catch { return {xp:0,bests:{},history:{}}; }
 }
 function save(d) { localStorage.setItem(SAVE_KEY, JSON.stringify(d)); }
-function xpGain(correct,total,ms) { return Math.round((correct/total)*total*2) + (correct===total ? Math.max(0,50-Math.floor(ms/2000)) : 0); }
+function xpGain(correct,total,ms) { return correct * 2 + (correct===total ? Math.max(0,50-Math.floor(ms/2000)) : 0); }
 const bkey = () => `${config.size}_${config.type}`;
 
 // ===== DARK MODE =====
@@ -685,6 +685,10 @@ function renderGrid() {
   const sz = cellSize();
   const op = {add:'+',sub:'−',mul:'×'}[config.type];
   const css = (s,fs) => `width:${s}px;height:${s}px;font-size:${fs}px`;
+  // テーブル自体もセルサイズから固定し、列幅の引き伸ばしを防ぐ。
+  tb.style.width = `${sz * (problem.cols + 1)}px`;
+  tb.style.height = `${sz * (problem.rows + 1)}px`;
+  tb.style.tableLayout = 'fixed';
 
   const hr = document.createElement('tr');
   const co = document.createElement('td');
@@ -1061,7 +1065,7 @@ function showFeedback(emoji,dur){
 document.getElementById('btn-print').addEventListener('click', () => {
   resumeAudio();
   if (!problem.top || !problem.top.length) genProblem();
-  // 新しいウィンドウで印刷（確実に印刷できる）
+  // 新しいウィンドウを試し、ブロックされた端末では同じページから印刷する。
   openPrintWindow();
 });
 
@@ -1134,7 +1138,10 @@ function openPrintWindow() {
 
   const w = window.open('', '_blank', 'width=800,height=600');
   if (w) { w.document.write(html); w.document.close(); }
-  else { alert('ポップアップをゆるかしてください'); }
+  else {
+    buildPrintArea();
+    window.print();
+  }
 }
 
 function buildPrintArea(showAnswers) {
