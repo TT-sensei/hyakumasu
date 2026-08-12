@@ -182,6 +182,16 @@
 
 
 
+  .graph-metric { display:flex; gap:6px; width:100%; }
+  .graph-metric .gf-btn { flex:1; min-height:40px; }
+  .graph-legend { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; color:var(--text-light); font-size:.7rem; font-weight:800; }
+  .graph-legend span { display:inline-flex; align-items:center; gap:4px; }
+  .legend-dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .legend-dot.perfect { background:#22c55e; }
+  .legend-dot.almost { background:#f59e0b; }
+  .legend-dot.needs { background:#ef4444; }
+  .graph-note { font-size:.75rem; color:var(--text-light); text-align:center; }
+
   /* ===== UI REFRESH ===== */
   .top-bar { align-items: flex-start; }
   .logo { font-size: clamp(1.8rem, 7vw, 2.45rem); }
@@ -483,11 +493,20 @@
     <button class="btn-action secondary" id="btn-graph-back" style="flex:0;padding:8px 16px;font-size:0.85rem;">← もどる</button>
   </div>
   <div class="graph-filter" id="graph-filter"></div>
+  <div class="graph-metric" id="graph-metric">
+    <button class="gf-btn active" data-metric="time">⏱ タイム</button>
+    <button class="gf-btn" data-metric="accuracy">🎯 正答率</button>
+  </div>
   <div class="graph-canvas-wrap">
     <canvas id="graph-canvas" height="220"></canvas>
     <div class="graph-empty" id="graph-empty"></div>
   </div>
-  <div style="font-size:0.75rem; color:var(--text-light); text-align:center;">全問正解したときのタイムを記録しています（最大50件）</div>
+  <div class="graph-legend" id="graph-legend">
+    <span><i class="legend-dot perfect"></i>全問正解</span>
+    <span><i class="legend-dot almost"></i>ミス1〜2問</span>
+    <span><i class="legend-dot needs"></i>ミス3問以上</span>
+  </div>
+  <div class="graph-note">全部入力した練習を記録しています。自己ベストは別に保存されます（最大50件）</div>
 </div>
 
 <!-- PRINT AREA (hidden, shown only on print) -->
@@ -571,7 +590,12 @@ function lvFromXp(xp) { let lv=1,rem=xp; while(rem>=xpNeeded(lv)){rem-=xpNeeded(
 
 // ===== SAVE =====
 const SAVE_KEY = 'hyakumas_save';
-function load() { try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null')||{xp:0,bests:{},history:{}};}catch{return{xp:0,bests:{},history:{}};} }
+function load() {
+  try {
+    const d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')||{};
+    return {xp:Number(d.xp)||0,bests:d.bests||{},history:d.history||{}};
+  } catch { return {xp:0,bests:{},history:{}}; }
+}
 function save(d) { localStorage.setItem(SAVE_KEY, JSON.stringify(d)); }
 function xpGain(correct,total,ms) { return Math.round((correct/total)*total*2) + (correct===total ? Math.max(0,50-Math.floor(ms/2000)) : 0); }
 const bkey = () => `${config.size}_${config.type}`;
@@ -794,7 +818,8 @@ function calcResult() {
     if(!isNaN(uv)&&uv===ans) correct++;
     else mistakes.push({row:r,col:c,correct:ans,user:isNaN(uv)?null:uv});
   }
-  resultData={time:elapsedMs,correct,total:problem.rows*problem.cols,mistakes};
+  const completed=inputs.flat().every(v=>v!=='');
+  resultData={time:elapsedMs,correct,total:problem.rows*problem.cols,mistakes,completed};
 }
 
 function getGrade(correct,total,ms){
@@ -806,7 +831,7 @@ function getGrade(correct,total,ms){
 }
 
 function renderResult() {
-  const {time,correct,total,mistakes}=resultData;
+  const {time,correct,total,mistakes,completed}=resultData;
   const g=getGrade(correct,total,time);
   const ge=document.getElementById('result-grade');
   ge.textContent=g.e+' '+g.l; ge.style.background=g.bg; ge.style.color=g.co;
@@ -821,11 +846,15 @@ function renderResult() {
   const newLv=lvFromXp(s.xp).lv;
   const key=bkey();
   const prev=s.bests[key];
-  const isBest=correct===total&&(!prev||time<prev);
-  if(isBest){
-    s.bests[key]=time;
+  const isBest=completed&&correct===total&&(!prev||time<prev);
+  if(isBest) s.bests[key]=time;
+  // 全マス入力した練習は、全問正解でなくても記録する。
+  // 旧形式の {t,d} もそのまま読み込める。
+  if(completed){
     if(!s.history[key])s.history[key]=[];
-    s.history[key].push({t:time,d:Date.now()});
+    s.history[key].push({
+      t:time,d:Date.now(),a:correct/total,c:correct,w:total-c
+    });
     if(s.history[key].length>50)s.history[key].shift();
   }
   save(s);
@@ -915,6 +944,7 @@ document.querySelectorAll('.review-numpad .numpad-btn').forEach(btn=>btn.addEven
 
 // ===== GRAPH =====
 let graphFilter = '100_add';
+let graphMetric = 'time';
 const GF = [
   {k:'100_add',l:'100たし'},{k:'100_sub',l:'100ひき'},{k:'100_mul',l:'100かけ'},
   {k:'50_add', l:'50たし'}, {k:'50_sub', l:'50ひき'}, {k:'50_mul', l:'50かけ'},
@@ -927,6 +957,12 @@ function renderGraph(){
   const fe=document.getElementById('graph-filter');
   fe.innerHTML=GF.map(f=>`<button class="gf-btn ${f.k===graphFilter?'active':''}" data-k="${f.k}">${f.l}</button>`).join('');
   fe.querySelectorAll('.gf-btn').forEach(btn=>btn.addEventListener('click',()=>{graphFilter=btn.dataset.k;renderGraph();}));
+
+  const me=document.getElementById('graph-metric');
+  me.querySelectorAll('.gf-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.metric===graphMetric);
+    btn.onclick=()=>{graphMetric=btn.dataset.metric;renderGraph();};
+  });
 
   const s=load();
   const hist=((s.history||{})[graphFilter])||[];
@@ -944,67 +980,66 @@ function renderGraph(){
   const W=canvas.parentElement.clientWidth-32, H=220;
   canvas.width=W*dpr; canvas.height=H*dpr;
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const ctx=canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
 
   const dark=document.body.classList.contains('dark');
   const pad={top:20,right:20,bottom:48,left:62};
   const gW=W-pad.left-pad.right, gH=H-pad.top-pad.bottom;
-  const times=hist.map(h=>h.t);
-  const minT=Math.min(...times), maxT=Math.max(...times), range=maxT-minT||1000;
+  const isAccuracy=graphMetric==='accuracy';
+  const values=hist.map(h=>isAccuracy?Math.round((h.a==null?1:h.a)*100):h.t);
+  const minV=isAccuracy?0:Math.min(...values);
+  const maxV=isAccuracy?100:(Math.max(...values)-minV||1000);
+  const range=isAccuracy?100:(maxV-minV||1000);
 
   ctx.fillStyle=dark?'#1e293b':'#ffffff'; ctx.fillRect(0,0,W,H);
-
-  // grid lines & y-axis labels
   ctx.strokeStyle=dark?'#334155':'#e2e8f0'; ctx.lineWidth=1;
   ctx.fillStyle=dark?'#94a3b8':'#64748b';
   ctx.font='10px M PLUS Rounded 1c,sans-serif'; ctx.textAlign='right';
   for(let i=0;i<=4;i++){
     const y=pad.top+(gH/4)*i;
     ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+gW,y); ctx.stroke();
-    const ms=maxT-(range/4)*i;
-    ctx.fillText(formatTime(Math.round(ms/100)*100), pad.left-6, y+4);
+    const v=isAccuracy?100-(100/4)*i:maxV-(range/4)*i;
+    ctx.fillText(isAccuracy?`${Math.round(v)}%`:formatTime(Math.round(v/100)*100),pad.left-6,y+4);
   }
 
-  // points
-  const pts=hist.map((h,i)=>({ x:pad.left+(gW/(hist.length-1))*i, y:pad.top+gH-((h.t-minT)/range)*gH }));
+  const pts=hist.map((h,i)=>({
+    x:pad.left+(gW/(hist.length-1))*i,
+    y:pad.top+gH-((values[i]-minV)/range)*gH
+  }));
 
-  // fill gradient
   const gr=ctx.createLinearGradient(0,pad.top,0,pad.top+gH);
-  gr.addColorStop(0, dark?'rgba(96,165,250,0.3)':'rgba(59,110,248,0.2)');
+  gr.addColorStop(0,dark?'rgba(96,165,250,0.3)':'rgba(59,110,248,0.2)');
   gr.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.beginPath(); ctx.moveTo(pts[0].x,pad.top+gH);
+  ctx.beginPath();ctx.moveTo(pts[0].x,pad.top+gH);
   pts.forEach(p=>ctx.lineTo(p.x,p.y));
-  ctx.lineTo(pts[pts.length-1].x,pad.top+gH); ctx.closePath();
-  ctx.fillStyle=gr; ctx.fill();
+  ctx.lineTo(pts[pts.length-1].x,pad.top+gH);ctx.closePath();
+  ctx.fillStyle=gr;ctx.fill();
 
-  // line
-  ctx.beginPath(); ctx.strokeStyle=dark?'#60a5fa':'#3b6ef8'; ctx.lineWidth=2.5; ctx.lineJoin='round';
-  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)); ctx.stroke();
+  ctx.beginPath();ctx.strokeStyle=dark?'#60a5fa':'#3b6ef8';ctx.lineWidth=2.5;ctx.lineJoin='round';
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
 
-  // dots
+  const dotColor=h=>{
+    const a=h.a==null?1:h.a;
+    return a>=1?'#22c55e':a>=.9?'#f59e0b':'#ef4444';
+  };
   pts.forEach((p,i)=>{
-    const best=hist[i].t===minT;
-    ctx.beginPath(); ctx.arc(p.x,p.y,best?6:4,0,Math.PI*2);
-    ctx.fillStyle=best?'#f59e0b':(dark?'#60a5fa':'#3b6ef8'); ctx.fill();
-    ctx.strokeStyle=dark?'#1e293b':'#ffffff'; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);
+    ctx.fillStyle=dotColor(hist[i]);ctx.fill();
+    ctx.strokeStyle=dark?'#1e293b':'#ffffff';ctx.lineWidth=2;ctx.stroke();
   });
 
-  // x-axis dates
-  ctx.fillStyle=dark?'#94a3b8':'#64748b'; ctx.textAlign='center';
+  ctx.fillStyle=dark?'#94a3b8':'#64748b';ctx.textAlign='center';
   const step=Math.max(1,Math.floor(hist.length/6));
   hist.forEach((h,i)=>{
     if(i%step===0||i===hist.length-1){
-      const d=new Date(h.d);
-      ctx.fillText(`${d.getMonth()+1}/${d.getDate()}`, pts[i].x, pad.top+gH+18);
+      const d=new Date(h.d);ctx.fillText(`${d.getMonth()+1}/${d.getDate()}`,pts[i].x,pad.top+gH+18);
     }
   });
 
-  // y-axis title
-  ctx.save(); ctx.translate(12,pad.top+gH/2); ctx.rotate(-Math.PI/2);
-  ctx.fillStyle=dark?'#94a3b8':'#64748b'; ctx.textAlign='center';
-  ctx.fillText('タイム',0,0); ctx.restore();
+  ctx.save();ctx.translate(12,pad.top+gH/2);ctx.rotate(-Math.PI/2);
+  ctx.fillStyle=dark?'#94a3b8':'#64748b';ctx.textAlign='center';
+  ctx.fillText(isAccuracy?'正答率':'タイム',0,0);ctx.restore();
 }
-
 // ===== FEEDBACK =====
 function showFeedback(emoji,dur){
   const el=document.getElementById('feedback-msg');
