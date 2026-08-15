@@ -540,6 +540,123 @@
     }
   }
 
+  /* ===== BADGE COLLECTION ===== */
+  .badge-home-btn {
+    display: block;
+    margin-top: 9px;
+    min-height: 42px;
+    padding: 8px 14px;
+    border: 2px solid #fbbf24;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fff7c2, #ffedd5);
+    color: #92400e;
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #f59e0b;
+  }
+  .badge-home-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #f59e0b; }
+  .badge-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(15,23,42,.62);
+  }
+  .badge-overlay.show { display: flex; }
+  .badge-panel {
+    width: min(960px, 100%);
+    max-height: min(760px, 94dvh);
+    overflow: auto;
+    padding: 18px;
+    border-radius: 24px;
+    background: var(--card);
+    color: var(--text);
+    box-shadow: 0 18px 60px rgba(0,0,0,.28);
+  }
+  .badge-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .badge-panel-title { color: var(--primary); font-size: 1.35rem; font-weight: 900; }
+  .badge-close {
+    min-height: 42px;
+    padding: 8px 14px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--numpad-bg);
+    color: var(--text);
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .badge-summary {
+    margin: 0 0 12px;
+    color: var(--text-light);
+    font-size: .8rem;
+    font-weight: 800;
+  }
+  .badge-collection-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .badge-card {
+    min-height: 164px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 5px;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg);
+    text-align: center;
+  }
+  .badge-card.earned {
+    border-color: #fbbf24;
+    background: linear-gradient(145deg, #fffde7, #fff7ed);
+    box-shadow: 0 4px 12px rgba(245,158,11,.16);
+  }
+  .badge-card.locked img { filter: grayscale(1) opacity(.27); }
+  .badge-card img { width: 86px; height: 86px; object-fit: contain; }
+  .badge-card-name { font-size: .78rem; font-weight: 900; }
+  .badge-card-hint { min-height: 2.6em; color: var(--text-light); font-size: .66rem; line-height: 1.35; }
+  .badge-unlock-banner {
+    display: none;
+    width: 100%;
+    margin-top: 2px;
+    padding: 9px 12px;
+    border: 2px solid #fbbf24;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fef3c7, #ffedd5);
+    color: #92400e;
+    text-align: center;
+    font-size: .85rem;
+    font-weight: 900;
+    animation: popIn .45s cubic-bezier(.34,1.56,.64,1);
+  }
+  .badge-unlock-banner.show { display: block; }
+  @media (max-width: 700px) {
+    .badge-collection-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .badge-panel { padding: 12px; }
+  }
+  @media (max-width: 420px) {
+    .badge-collection-grid { gap: 6px; }
+    .badge-card { min-height: 132px; }
+    .badge-card img { width: 64px; height: 64px; }
+    .badge-card-name { font-size: .68rem; }
+    .badge-card-hint { font-size: .58rem; }
+  }
+
 </style>
 </head>
 <body>
@@ -551,6 +668,7 @@
       <div class="logo">100マス<span>計算</span></div>
       <div class="subtitle">速さと正確さをきたえよう！</div>
       <div class="start-guide"><span>①えらぶ</span><b>→</b><span>②はじめる</span><b>→</b><span>③こたえる</span></div>
+      <button class="badge-home-btn" id="btn-badges">🏅 バッジを見る</button>
     </div>
     <button class="dark-toggle" id="dark-toggle">🌙</button>
   </div>
@@ -621,6 +739,7 @@
     <div id="result-time" class="result-time"></div>
     <div class="result-time-label">タイム</div>
     <div id="result-score" class="result-score"></div>
+    <div id="badge-unlock-banner" class="badge-unlock-banner"></div>
     <div class="xp-gain" id="xp-gain"></div>
   </div>
   <div class="result-grid-wrapper">
@@ -683,6 +802,18 @@
     <span><i class="legend-dot needs"></i>ミス3問以上</span>
   </div>
   <div class="graph-note">全部入力した練習を記録しています。自己ベストは別に保存されます（最大50件）</div>
+</div>
+
+<!-- BADGE COLLECTION OVERLAY -->
+<div id="badge-overlay" class="badge-overlay" aria-hidden="true">
+  <div class="badge-panel" role="dialog" aria-modal="true" aria-labelledby="badge-panel-title">
+    <div class="badge-panel-head">
+      <div class="badge-panel-title" id="badge-panel-title">🏅 バッジコレクション</div>
+      <button class="badge-close" id="btn-badges-close">✕ とじる</button>
+    </div>
+    <div class="badge-summary" id="badge-summary"></div>
+    <div class="badge-collection-grid" id="badge-collection-grid"></div>
+  </div>
 </div>
 
 <!-- PRINT AREA (hidden, shown only on print) -->
@@ -806,6 +937,7 @@ function showScreen(id) {
 // ===== TOP PLAYER =====
 function renderTop() {
   const s = load();
+  renderBadgeAccess(s);
   const {lv,rem,need} = lvFromXp(s.xp);
   const te = titleAt(lv);
   document.getElementById('top-avatar').textContent = te.e;
@@ -819,6 +951,78 @@ function renderTop() {
     return `<div class="best-chip"><div class="bc-label">${config.size}マス ${lb[t]}</div><div class="bc-val">${b?formatTime(b):'—'}</div></div>`;
   }).join('');
 }
+
+// ===== BADGES =====
+const EDU_BADGE_IMAGE = badge =>
+  `https://tt-sensei.github.io/edu-assets/assets/badges/${badge.root}/${badge.slug}/badge.png`;
+
+const BADGES = [
+  {slug:'first-step', root:'common', name:'はじめの一歩', hint:'はじめて1回クリア', test:s=>badgeStats(s).runs>=1},
+  {slug:'challenger', root:'common', name:'チャレンジャー', hint:'5回クリア', test:s=>badgeStats(s).runs>=5},
+  {slug:'accuracy', root:'common', name:'せいかく名人', hint:'全問正解を1回', test:s=>badgeStats(s).perfect>=1},
+  {slug:'speed', root:'common', name:'スピードスター', hint:'全問正解を60秒以内', test:s=>badgeStats(s).speed>=1},
+  {slug:'streak', root:'common', name:'継続パワー', hint:'3日以上取り組む', test:s=>badgeStats(s).days>=3},
+  {slug:'practice-master', root:'common', name:'れんしゅう名人', hint:'20回クリア', test:s=>badgeStats(s).runs>=20},
+  {slug:'calculation', root:'math', name:'計算マスター', hint:'計算に挑戦する', test:s=>badgeStats(s).runs>=1},
+  {slug:'number-sense', root:'math', name:'数となかよし', hint:'たし・ひき・かけを経験', test:s=>badgeStats(s).modes>=3},
+  {slug:'logical-thinking', root:'math', name:'すじみち思考', hint:'50回クリア', test:s=>badgeStats(s).runs>=50},
+  {slug:'champion', root:'common', name:'ひゃくますチャンピオン', hint:'全問正解を10回', test:s=>badgeStats(s).perfect>=10}
+];
+
+function badgeRecords(s) {
+  return Object.values(s.history || {}).flat().filter(r => r && typeof r === 'object');
+}
+function badgeStats(s) {
+  const records = badgeRecords(s);
+  const perfectRecords = records.filter(r => Number(r.a) >= 1);
+  const dates = new Set(records.filter(r => r.d).map(r => {
+    const d = new Date(r.d);
+    return isNaN(d) ? String(r.d) : d.toISOString().slice(0,10);
+  }));
+  const modes = new Set(Object.keys(s.history || {}).filter(k => (s.history[k] || []).length));
+  return {
+    runs: records.length,
+    perfect: perfectRecords.length,
+    speed: perfectRecords.filter(r => Number(r.t) < 60000).length,
+    days: dates.size,
+    modes: modes.size
+  };
+}
+function renderBadgeAccess(s = load()) {
+  const earned = BADGES.filter(b => b.test(s)).length;
+  const button = document.getElementById('btn-badges');
+  if (button) button.textContent = `🏅 バッジ ${earned}/${BADGES.length}`;
+}
+function renderBadges() {
+  const s = load();
+  const earned = BADGES.filter(b => b.test(s)).length;
+  document.getElementById('badge-summary').textContent =
+    `${earned} / ${BADGES.length} 個ゲット！　できるようになったことをバッジに残そう。`;
+  document.getElementById('badge-collection-grid').innerHTML = BADGES.map(b => {
+    const got = b.test(s);
+    return `<div class="badge-card ${got ? 'earned' : 'locked'}">
+      <img src="${EDU_BADGE_IMAGE(b)}" alt="${got ? b.name : '未獲得バッジ'}">
+      <div class="badge-card-name">${got ? b.name : '？？？'}</div>
+      <div class="badge-card-hint">${got ? b.hint : '条件を達成すると解放'}</div>
+    </div>`;
+  }).join('');
+}
+function showBadges(show) {
+  const overlay = document.getElementById('badge-overlay');
+  if (show) {
+    renderBadges();
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+  } else {
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+  }
+}
+document.getElementById('btn-badges').addEventListener('click', () => showBadges(true));
+document.getElementById('btn-badges-close').addEventListener('click', () => showBadges(false));
+document.getElementById('badge-overlay').addEventListener('click', e => {
+  if (e.target.id === 'badge-overlay') showBadges(false);
+});
 
 // ===== TOGGLES =====
 function setupToggle(gid, key) {
@@ -1041,6 +1245,7 @@ function renderResult() {
 
   // XP & BEST
   const s=load(); if(!s.history)s.history={};
+  const badgeCountBefore = BADGES.filter(b => b.test(s)).length;
   const xp=xpGain(correct,total,time);
   const oldLv=lvFromXp(s.xp).lv;
   s.xp+=xp;
@@ -1059,6 +1264,16 @@ function renderResult() {
     if(s.history[key].length>50)s.history[key].shift();
   }
   save(s);
+
+  const newBadges = BADGES.filter(b => b.test(s)).length - badgeCountBefore;
+  const badgeBanner = document.getElementById('badge-unlock-banner');
+  if (newBadges > 0) {
+    const latest = BADGES.filter(b => b.test(s)).slice(-newBadges);
+    badgeBanner.textContent = `🏅 新しいバッジをゲット！ ${latest.map(b => b.name).join('・')}`;
+    badgeBanner.classList.add('show');
+  } else {
+    badgeBanner.classList.remove('show');
+  }
 
   document.getElementById('xp-gain').textContent=`+${xp} XP`;
   const banner=document.getElementById('new-best-banner');
