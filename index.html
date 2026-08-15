@@ -273,6 +273,102 @@
     .best-chip .bc-label { font-size: .56rem; }
   }
 
+  /* ===== TABLET FOCUS LAYOUT ===== */
+  /*
+   * タブレットでは、縦に長い1列レイアウトにせず、
+   * 「選ぶ・はじめる」と「結果・次の行動」を画面内にまとめる。
+   * 問題生成・入力・記録などの動作は変更しない。
+   */
+  @media (min-width: 600px) {
+    #screen-top {
+      max-width: 980px;
+      padding: clamp(12px, 2.2vh, 24px) 24px 24px;
+      display: grid !important;
+      grid-template-columns: minmax(270px, .82fr) minmax(360px, 1.18fr);
+      align-content: start;
+      column-gap: 22px;
+      row-gap: 10px;
+    }
+    #screen-top > .top-bar { grid-column: 1 / -1; }
+    #screen-top > .player-card { grid-column: 1; }
+    #screen-top > .best-row { grid-column: 1; }
+    #screen-top > .section-label:nth-child(4),
+    #screen-top > #size-group,
+    #screen-top > .section-label:nth-child(6),
+    #screen-top > #type-group,
+    #screen-top > #btn-start,
+    #screen-top > #btn-show-graph,
+    #screen-top > #btn-print { grid-column: 2; }
+    #screen-top > .section-label:nth-child(4) { grid-row: 3; }
+    #screen-top > #size-group { grid-row: 4; }
+    #screen-top > .section-label:nth-child(6) { grid-row: 5; }
+    #screen-top > #type-group { grid-row: 6; }
+    #screen-top > #btn-start { grid-row: 7; }
+    #screen-top > #btn-show-graph { grid-row: 8; }
+    #screen-top > #btn-print { grid-row: 9; }
+    #screen-top > .player-card { grid-row: 3; }
+    #screen-top > .best-row { grid-row: 4 / span 2; align-self: start; }
+
+    #screen-top > #btn-start {
+      margin-top: 2px;
+      min-height: 68px;
+      font-size: 1.5rem;
+    }
+    #screen-top > #btn-show-graph,
+    #screen-top > #btn-print { min-height: 44px; }
+
+    #screen-result {
+      max-width: 1040px;
+      padding: clamp(12px, 2vh, 22px) 24px 24px;
+      display: grid !important;
+      grid-template-columns: minmax(260px, .8fr) minmax(400px, 1.2fr);
+      grid-template-areas:
+        "heading heading"
+        "banner banner"
+        "card    grid"
+        "actions actions";
+      align-content: start;
+      column-gap: 22px;
+      row-gap: 10px;
+    }
+    #screen-result > .result-heading { grid-area: heading; }
+    #screen-result > .new-best-banner { grid-area: banner; }
+    #screen-result > .result-card { grid-area: card; align-self: start; }
+    #screen-result > .result-grid-wrapper {
+      grid-area: grid;
+      max-height: min(48vh, 430px);
+      align-self: start;
+    }
+    #screen-result > .btn-row {
+      grid-area: actions;
+    }
+    #screen-result > .btn-row + .btn-row { margin-top: 0; }
+    #screen-result > .btn-row:first-of-type {
+      margin-top: 2px;
+    }
+    #screen-result > .btn-row:first-of-type .btn-action {
+      min-height: 52px;
+      font-size: .98rem;
+    }
+    #screen-result > .btn-row:last-of-type .btn-action {
+      min-height: 48px;
+    }
+  }
+
+  @media (min-width: 600px) and (max-height: 720px) {
+    #screen-top { row-gap: 6px; padding-top: 10px; padding-bottom: 12px; }
+    #screen-top > .player-card { padding-top: 10px; padding-bottom: 10px; }
+    #screen-top > .best-row { padding-top: 0; }
+    #screen-top .btn-choice { min-height: 58px; padding-top: 7px; padding-bottom: 7px; }
+    #screen-top > #btn-start { min-height: 56px; }
+    #screen-top > #btn-show-graph,
+    #screen-top > #btn-print { min-height: 38px; padding-top: 8px; padding-bottom: 8px; }
+    #screen-result { row-gap: 6px; padding-top: 10px; padding-bottom: 12px; }
+    #screen-result .result-card { padding: 12px; gap: 5px; }
+    #screen-result .result-time { font-size: 2.4rem; }
+    #screen-result > .result-grid-wrapper { max-height: 40vh; }
+  }
+
   /* ===== TABLET / PC INPUT LAYOUT ===== */
   /* 幅600px以上では、テンキーを下ではなく右側に固定する。 */
   @media (min-width: 600px) {
