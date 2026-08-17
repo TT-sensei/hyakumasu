@@ -657,6 +657,16 @@
     .badge-card-hint { font-size: .58rem; }
   }
 
+
+  /* Non-active pages must never override the base `.screen { display: none; }` rule.
+     The tablet grid layouts below are active-state layouts only. */
+  @media (min-width: 600px) {
+    #screen-top:not(.active),
+    #screen-game:not(.active),
+    #screen-result:not(.active) {
+      display: none !important;
+    }
+  }
 </style>
 </head>
 <body>
