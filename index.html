@@ -84,15 +84,11 @@
     border-radius: 16px; background: linear-gradient(135deg, var(--card), color-mix(in srgb, var(--header-cell) 54%, var(--card)));
     box-shadow: var(--shadow); overflow: hidden;
   }
-  .navi-cheer-art { width: 68px; height: 88px; object-fit: contain; align-self: flex-end; flex-shrink: 0; }
+  .navi-cheer-art { width: 122px; height: 96px; object-fit: contain; flex-shrink: 0; }
   .navi-cheer-copy { min-width: 0; flex: 1; }
   .navi-cheer-label { color: var(--accent); font-size: .62rem; font-weight: 900; letter-spacing: .08em; }
   .navi-cheer-message { margin-top: 3px; font-size: .92rem; font-weight: 900; line-height: 1.35; }
   .navi-cheer-name { margin-top: 4px; color: var(--text-light); font-size: .68rem; font-weight: 800; }
-  .navi-team { display: flex; align-items: flex-end; gap: 1px; margin-left: auto; flex-shrink: 0; }
-  .navi-team img { width: 24px; height: 39px; object-fit: contain; object-position: bottom; }
-  .navi-team img:nth-child(2n) { height: 35px; }
-  .navi-team img:nth-child(3n) { height: 43px; }
   .navi-result { width: 100%; display:flex; align-items:center; justify-content:center; gap:8px; padding: 2px 4px 0; }
   .navi-result img { width: 58px; height: 70px; object-fit: contain; }
   .navi-result span { color: var(--text-light); font-size: .74rem; font-weight: 800; }
@@ -720,19 +716,11 @@
   </div>
   <div class="best-row" id="best-row"></div>
   <div class="navi-cheer" id="top-navi-cheer" aria-label="ナビキャラの応援">
-    <img class="navi-cheer-art" id="top-navi-art" alt="ナビキャラ">
+    <img class="navi-cheer-art" id="top-navi-art" alt="ナビチームの集合絵">
     <div class="navi-cheer-copy">
       <div class="navi-cheer-label">NAVI TEAM</div>
       <div class="navi-cheer-message" id="top-navi-message">じぶんのペースで、1マスずつ！</div>
       <div class="navi-cheer-name" id="top-navi-name">そらが応援中</div>
-    </div>
-    <div class="navi-team" aria-hidden="true">
-      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/riku/fullbody/leaning.png" alt="">
-      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/sora/fullbody/jumping.png" alt="">
-      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/kai/fullbody/pointing.png" alt="">
-      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/saku/fullbody/finger-heart.png" alt="">
-      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/tsuki/fullbody/peace-sign.png" alt="">
-      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/nami/fullbody/hand-over-heart.png" alt="">
     </div>
   </div>
   <div class="section-label" id="size-label"><span>マスの数</span><small>まずは30マスからでもOK</small></div>
@@ -1022,13 +1010,12 @@ const NAVI_CHEERS = [
   {id:'nami', pose:'hand-over-heart', name:'なみ', message:'今日の挑戦、わたしたちが見守るね。'}
 ];
 function renderNaviCheer() {
-  const n = NAVI_CHEERS[new Date().getDate() % NAVI_CHEERS.length];
   const art = document.getElementById('top-navi-art');
   if (!art) return;
-  art.src = NAVI_IMAGE(n.id, n.pose);
-  art.alt = `${n.name}｜百ます計算を応援`;
-  document.getElementById('top-navi-message').textContent = n.message;
-  document.getElementById('top-navi-name').textContent = `${n.name}が応援中`;
+  art.src = 'https://tt-sensei.github.io/navi-character-/assets/web/groups/group-studying.webp';
+  art.alt = 'ナビチーム6人の集合絵｜いっしょに学ぼう';
+  document.getElementById('top-navi-message').textContent = 'いっしょに学ぼう！';
+  document.getElementById('top-navi-name').textContent = 'ナビチームが応援中';
 }
 
 const BADGES = [
