@@ -1055,7 +1055,8 @@ const BADGES = [
   {slug:'math-discovery', root:'math', name:'計算発見', hint:'50マスを5回クリア', test:s=>badgeStats(s).size50Runs>=5},
   {slug:'mastery', root:'common', name:'積み上げマスター', hint:'100マスを5回クリア', test:s=>badgeStats(s).size100Runs>=5},
   {slug:'breakthrough', root:'common', name:'できた！の瞬間', hint:'前回より正答数アップ', test:s=>badgeStats(s).breakthrough>=1},
-  {slug:'mission-complete', root:'common', name:'三つの道クリア', hint:'3種類すべてで全問正解', test:s=>badgeStats(s).perfectModes>=3}
+  {slug:'mission-complete', root:'common', name:'三つの道クリア', hint:'3種類すべてで全問正解', test:s=>badgeStats(s).perfectModes>=3},
+  {slug:'adventurer', root:'common', name:'百ます探検家', hint:'75回クリア', test:s=>badgeStats(s).runs>=75}
 ];
 
 function badgeRecords(s) {
