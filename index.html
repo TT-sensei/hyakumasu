@@ -76,6 +76,30 @@
   .best-chip .bc-label { font-size: 0.62rem; color: var(--text-light); font-weight: 800; }
   .best-chip .bc-val { font-size: 0.9rem; font-weight: 900; color: var(--primary); }
 
+  /* ===== NAVI CHEER ===== */
+  .navi-cheer {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    min-height: 106px; padding: 8px 12px 8px 8px;
+    border: 2px solid color-mix(in srgb, var(--accent) 22%, transparent);
+    border-radius: 16px; background: linear-gradient(135deg, var(--card), color-mix(in srgb, var(--header-cell) 54%, var(--card)));
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .navi-cheer-art { width: 68px; height: 88px; object-fit: contain; align-self: flex-end; flex-shrink: 0; }
+  .navi-cheer-copy { min-width: 0; flex: 1; }
+  .navi-cheer-label { color: var(--accent); font-size: .62rem; font-weight: 900; letter-spacing: .08em; }
+  .navi-cheer-message { margin-top: 3px; font-size: .92rem; font-weight: 900; line-height: 1.35; }
+  .navi-cheer-name { margin-top: 4px; color: var(--text-light); font-size: .68rem; font-weight: 800; }
+  .navi-team { display: flex; align-items: flex-end; gap: 1px; margin-left: auto; flex-shrink: 0; }
+  .navi-team img { width: 24px; height: 39px; object-fit: contain; object-position: bottom; }
+  .navi-team img:nth-child(2n) { height: 35px; }
+  .navi-team img:nth-child(3n) { height: 43px; }
+  .navi-result { width: 100%; display:flex; align-items:center; justify-content:center; gap:8px; padding: 2px 4px 0; }
+  .navi-result img { width: 58px; height: 70px; object-fit: contain; }
+  .navi-result span { color: var(--text-light); font-size: .74rem; font-weight: 800; }
+  .navi-result strong { color: var(--accent); }
+  .navi-cheer img, .navi-result img { animation: naviFloat 3.2s ease-in-out infinite; }
+  @keyframes naviFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
   .section-label { font-size: 0.75rem; font-weight: 800; color: var(--text-light); letter-spacing: 0.08em; text-transform: uppercase; align-self: flex-start; margin-bottom: -6px; }
   .btn-group { display: flex; gap: 10px; width: 100%; }
   .btn-choice { flex: 1; padding: 12px 8px; border-radius: 14px; border: 3px solid var(--border); background: var(--card); font-family: inherit; font-size: 0.95rem; font-weight: 800; color: var(--text-light); cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -292,16 +316,17 @@
     #screen-top > .top-bar { grid-column: 1 / -1; }
     #screen-top > .player-card { grid-column: 1; }
     #screen-top > .best-row { grid-column: 1; }
-    #screen-top > .section-label:nth-child(4),
+    #screen-top > .navi-cheer { grid-column: 1; grid-row: 6 / span 4; align-self: start; }
+    #screen-top > #size-label,
     #screen-top > #size-group,
-    #screen-top > .section-label:nth-child(6),
+    #screen-top > #type-label,
     #screen-top > #type-group,
     #screen-top > #btn-start,
     #screen-top > #btn-show-graph,
     #screen-top > #btn-print { grid-column: 2; }
-    #screen-top > .section-label:nth-child(4) { grid-row: 3; }
+    #screen-top > #size-label { grid-row: 3; }
     #screen-top > #size-group { grid-row: 4; }
-    #screen-top > .section-label:nth-child(6) { grid-row: 5; }
+    #screen-top > #type-label { grid-row: 5; }
     #screen-top > #type-group { grid-row: 6; }
     #screen-top > #btn-start { grid-row: 7; }
     #screen-top > #btn-show-graph { grid-row: 8; }
@@ -630,6 +655,8 @@
   .badge-card img { width: 86px; height: 86px; object-fit: contain; }
   .badge-card-name { font-size: .78rem; font-weight: 900; }
   .badge-card-hint { min-height: 2.6em; color: var(--text-light); font-size: .66rem; line-height: 1.35; }
+  .badge-card { position: relative; }
+  .badge-card.earned::after { content: 'GET!'; position: absolute; top: 5px; right: 6px; padding: 2px 4px; border-radius: 5px; background: #fbbf24; color: #78350f; font-size: .5rem; font-weight: 900; }
   .badge-unlock-banner {
     display: none;
     width: 100%;
@@ -692,13 +719,29 @@
     </div>
   </div>
   <div class="best-row" id="best-row"></div>
-  <div class="section-label"><span>マスの数</span><small>まずは30マスからでもOK</small></div>
+  <div class="navi-cheer" id="top-navi-cheer" aria-label="ナビキャラの応援">
+    <img class="navi-cheer-art" id="top-navi-art" alt="ナビキャラ">
+    <div class="navi-cheer-copy">
+      <div class="navi-cheer-label">NAVI TEAM</div>
+      <div class="navi-cheer-message" id="top-navi-message">じぶんのペースで、1マスずつ！</div>
+      <div class="navi-cheer-name" id="top-navi-name">そらが応援中</div>
+    </div>
+    <div class="navi-team" aria-hidden="true">
+      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/riku/fullbody/leaning.png" alt="">
+      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/sora/fullbody/jumping.png" alt="">
+      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/kai/fullbody/pointing.png" alt="">
+      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/saku/fullbody/finger-heart.png" alt="">
+      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/tsuki/fullbody/peace-sign.png" alt="">
+      <img src="https://tt-sensei.github.io/navi-character-/assets/characters/nami/fullbody/hand-over-heart.png" alt="">
+    </div>
+  </div>
+  <div class="section-label" id="size-label"><span>マスの数</span><small>まずは30マスからでもOK</small></div>
   <div class="btn-group" id="size-group">
     <button class="btn-choice selected" data-val="100"><span class="icon">🔢</span>100マス</button>
     <button class="btn-choice" data-val="50"><span class="icon">⚡</span>50マス</button>
     <button class="btn-choice" data-val="30"><span class="icon">🎯</span>30マス</button>
   </div>
-  <div class="section-label"><span>計算のしゅるい</span><small>とくいなものからえらぼう</small></div>
+  <div class="section-label" id="type-label"><span>計算のしゅるい</span><small>とくいなものからえらぼう</small></div>
   <div class="btn-group" id="type-group">
     <button class="btn-choice selected" data-val="add"><span class="icon">➕</span>たしざん</button>
     <button class="btn-choice" data-val="sub"><span class="icon">➖</span>ひきざん</button>
@@ -751,6 +794,7 @@
     <div id="result-score" class="result-score"></div>
     <div id="badge-unlock-banner" class="badge-unlock-banner"></div>
     <div class="xp-gain" id="xp-gain"></div>
+    <div class="navi-result"><img id="result-navi-art" alt="ナビキャラ"><span id="result-navi-message"></span></div>
   </div>
   <div class="result-grid-wrapper">
     <table class="result-grid-table" id="result-grid-table"></table>
@@ -910,8 +954,8 @@ const SAVE_KEY = 'hyakumas_save';
 function load() {
   try {
     const d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')||{};
-    return {xp:Number(d.xp)||0,bests:d.bests||{},history:d.history||{}};
-  } catch { return {xp:0,bests:{},history:{}}; }
+    return {xp:Number(d.xp)||0,bests:d.bests||{},history:d.history||{},reviewClears:Number(d.reviewClears)||0};
+  } catch { return {xp:0,bests:{},history:{},reviewClears:0}; }
 }
 function save(d) { localStorage.setItem(SAVE_KEY, JSON.stringify(d)); }
 function xpGain(correct,total,ms) { return correct * 2 + (correct===total ? Math.max(0,50-Math.floor(ms/2000)) : 0); }
@@ -960,11 +1004,32 @@ function renderTop() {
     const b = s.bests[`${config.size}_${t}`];
     return `<div class="best-chip"><div class="bc-label">${config.size}マス ${lb[t]}</div><div class="bc-val">${b?formatTime(b):'—'}</div></div>`;
   }).join('');
+  renderNaviCheer();
 }
 
 // ===== BADGES =====
 const EDU_BADGE_IMAGE = badge =>
   `https://tt-sensei.github.io/edu-assets/assets/badges/${badge.root}/${badge.slug}/badge.png`;
+
+const NAVI_IMAGE = (id, pose) =>
+  `https://tt-sensei.github.io/navi-character-/assets/characters/${id}/fullbody/${pose}.png`;
+const NAVI_CHEERS = [
+  {id:'sora', pose:'jumping', name:'そら', message:'げんきにいこう！ まずは1マス！'},
+  {id:'riku', pose:'leaning', name:'りく', message:'あせらず、正確に。きみならできる。'},
+  {id:'kai', pose:'pointing', name:'かい', message:'式をよく見て、答えを見つけよう。'},
+  {id:'saku', pose:'finger-heart', name:'さく', message:'できたところを、ちゃんとほめよう！'},
+  {id:'tsuki', pose:'peace-sign', name:'つき', message:'一歩ずつ進めば、記録も伸びるよ。'},
+  {id:'nami', pose:'hand-over-heart', name:'なみ', message:'今日の挑戦、わたしたちが見守るね。'}
+];
+function renderNaviCheer() {
+  const n = NAVI_CHEERS[new Date().getDate() % NAVI_CHEERS.length];
+  const art = document.getElementById('top-navi-art');
+  if (!art) return;
+  art.src = NAVI_IMAGE(n.id, n.pose);
+  art.alt = `${n.name}｜百ます計算を応援`;
+  document.getElementById('top-navi-message').textContent = n.message;
+  document.getElementById('top-navi-name').textContent = `${n.name}が応援中`;
+}
 
 const BADGES = [
   {slug:'first-step', root:'common', name:'はじめの一歩', hint:'はじめて1回クリア', test:s=>badgeStats(s).runs>=1},
@@ -976,11 +1041,27 @@ const BADGES = [
   {slug:'calculation', root:'math', name:'計算マスター', hint:'計算に挑戦する', test:s=>badgeStats(s).runs>=1},
   {slug:'number-sense', root:'math', name:'数となかよし', hint:'たし・ひき・かけを経験', test:s=>badgeStats(s).modes>=3},
   {slug:'logical-thinking', root:'math', name:'すじみち思考', hint:'50回クリア', test:s=>badgeStats(s).runs>=50},
-  {slug:'champion', root:'common', name:'ひゃくますチャンピオン', hint:'全問正解を10回', test:s=>badgeStats(s).perfect>=10}
+  {slug:'champion', root:'common', name:'ひゃくますチャンピオン', hint:'全問正解を10回', test:s=>badgeStats(s).perfect>=10},
+  {slug:'clear', root:'common', name:'クリアのひかり', hint:'30マスを全問正解', test:s=>badgeStats(s).perfectSize30>=1},
+  {slug:'steady-progress', root:'common', name:'こつこつ前進', hint:'10回クリア', test:s=>badgeStats(s).runs>=10},
+  {slug:'hard-worker', root:'common', name:'どりょくの星', hint:'30回クリア', test:s=>badgeStats(s).runs>=30},
+  {slug:'focus', root:'common', name:'45秒のかべ', hint:'全問正解を45秒以内', test:s=>badgeStats(s).speed45>=1},
+  {slug:'perfect', root:'common', name:'パーフェクト連発', hint:'全問正解を3回', test:s=>badgeStats(s).perfect>=3},
+  {slug:'comeback', root:'common', name:'まきかえし名人', hint:'ミスのある後に全問正解', test:s=>badgeStats(s).comeback>=1},
+  {slug:'review-master', root:'common', name:'見直し名人', hint:'ミス復習を1回クリア', test:s=>badgeStats(s).review>=1},
+  {slug:'mental-math', root:'math', name:'暗算パワー', hint:'50マス以上を経験', test:s=>badgeStats(s).largeRuns>=1},
+  {slug:'pattern', root:'math', name:'数のパターン', hint:'3種類の計算を経験', test:s=>badgeStats(s).modes>=3},
+  {slug:'strategy', root:'math', name:'作戦タイム', hint:'30マスを5回クリア', test:s=>badgeStats(s).size30Runs>=5},
+  {slug:'math-discovery', root:'math', name:'計算発見', hint:'50マスを5回クリア', test:s=>badgeStats(s).size50Runs>=5},
+  {slug:'mastery', root:'common', name:'積み上げマスター', hint:'100マスを5回クリア', test:s=>badgeStats(s).size100Runs>=5},
+  {slug:'breakthrough', root:'common', name:'できた！の瞬間', hint:'前回より正答数アップ', test:s=>badgeStats(s).breakthrough>=1},
+  {slug:'mission-complete', root:'common', name:'三つの道クリア', hint:'3種類すべてで全問正解', test:s=>badgeStats(s).perfectModes>=3}
 ];
 
 function badgeRecords(s) {
-  return Object.values(s.history || {}).flat().filter(r => r && typeof r === 'object');
+  return Object.entries(s.history || {}).flatMap(([key, rows]) =>
+    (rows || []).filter(r => r && typeof r === 'object').map(r => ({...r, k:r.k || key}))
+  ).sort((a,b) => Number(a.d || 0) - Number(b.d || 0));
 }
 function badgeStats(s) {
   const records = badgeRecords(s);
@@ -990,12 +1071,25 @@ function badgeStats(s) {
     return isNaN(d) ? String(r.d) : d.toISOString().slice(0,10);
   }));
   const modes = new Set(Object.keys(s.history || {}).filter(k => (s.history[k] || []).length));
+  const perfectModes = new Set(perfectRecords.map(r => String(r.k || '').split('_')[1])).size;
+  const sizeRuns = size => records.filter(r => String(r.k || '').startsWith(`${size}_`)).length;
+  const perfectSize30 = perfectRecords.filter(r => String(r.k || '').startsWith('30_')).length;
   return {
     runs: records.length,
     perfect: perfectRecords.length,
     speed: perfectRecords.filter(r => Number(r.t) < 60000).length,
+    speed45: perfectRecords.filter(r => Number(r.t) < 45000).length,
     days: dates.size,
-    modes: modes.size
+    modes: modes.size,
+    perfectSize30,
+    size30Runs: sizeRuns(30),
+    size50Runs: sizeRuns(50),
+    size100Runs: sizeRuns(100),
+    largeRuns: records.filter(r => Number(String(r.k || '').split('_')[0]) >= 50).length,
+    comeback: records.some((r,i) => i > 0 && Number(r.a) >= 1 && Number(records[i-1].a) < 1),
+    review: Number(s.reviewClears) || 0,
+    breakthrough: records.some((r,i) => i > 0 && Number(r.c) > Number(records[i-1].c)),
+    perfectModes
   };
 }
 function renderBadgeAccess(s = load()) {
@@ -1269,7 +1363,7 @@ function renderResult() {
   if(completed){
     if(!s.history[key])s.history[key]=[];
     s.history[key].push({
-      t:time,d:Date.now(),a:correct/total,c:correct,w:total-correct
+      t:time,d:Date.now(),a:correct/total,c:correct,w:total-correct,k:key
     });
     if(s.history[key].length>50)s.history[key].shift();
   }
@@ -1286,6 +1380,11 @@ function renderResult() {
   }
 
   document.getElementById('xp-gain').textContent=`+${xp} XP`;
+  const resultNavi = NAVI_CHEERS[(new Date().getDate() + correct) % NAVI_CHEERS.length];
+  const resultNaviArt = document.getElementById('result-navi-art');
+  resultNaviArt.src = NAVI_IMAGE(resultNavi.id, resultNavi.pose);
+  resultNaviArt.alt = `${resultNavi.name}｜結果を応援`;
+  document.getElementById('result-navi-message').innerHTML = `${resultNavi.name}「<strong>${correct===total ? 'ぜんぶできたね！' : 'できたところを大切に、次もいこう！'}</strong>」`;
   const banner=document.getElementById('new-best-banner');
   if(isBest){banner.textContent=`🏅 じこベスト こうしん！ ${formatTime(time)}`;banner.classList.add('show');setTimeout(seBest,200);}
   else banner.classList.remove('show');
@@ -1342,7 +1441,10 @@ function startReview(){
   showScreen('review'); showReviewProblem();
 }
 function showReviewProblem(){
-  if(reviewIdx>=reviewQueue.length){showFeedback('🎉',2000);seComplete();setTimeout(()=>showScreen('result'),2000);return;}
+  if(reviewIdx>=reviewQueue.length){
+    const s=load(); s.reviewClears=(Number(s.reviewClears)||0)+1; save(s);
+    showFeedback('🎉',2000);seComplete();setTimeout(()=>showScreen('result'),2000);return;
+  }
   reviewProblem=reviewQueue[reviewIdx];
   const {row,col}=reviewProblem;
   const op={add:'+',sub:'−',mul:'×'}[config.type];
