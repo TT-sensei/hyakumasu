@@ -78,15 +78,15 @@
 
   /* ===== NAVI CHEER ===== */
   .navi-cheer {
-    width: 100%; display: flex; align-items: center; gap: 10px;
-    min-height: 106px; padding: 8px 12px 8px 8px;
+    width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    min-height: 106px; padding: 8px 10px 0;
     border: 2px solid color-mix(in srgb, var(--accent) 22%, transparent);
     border-radius: 16px; background: linear-gradient(135deg, var(--card), color-mix(in srgb, var(--header-cell) 54%, var(--card)));
     box-shadow: var(--shadow); overflow: hidden;
   }
-  .navi-cheer-art { width: 110px; height: 86px; object-fit: contain; flex-shrink: 0; }
-  .navi-cheer-copy { min-width: 0; flex: 1; }
-  .navi-cheer-label { color: var(--accent); font-size: .62rem; font-weight: 900; letter-spacing: .08em; }
+  .navi-cheer-art { order: 2; display: block; width: 100%; height: auto; max-width: 100%; object-fit: contain; flex-shrink: 0; }
+  .navi-cheer-copy { order: 1; width: 100%; min-width: 0; text-align: center; }
+  .navi-cheer-label { color: var(--accent); font-size: .62rem; font-weight: 900; letter-spacing: .08em; white-space: nowrap; }
   .navi-cheer-message { margin-top: 3px; white-space: nowrap; font-size: .85rem; font-weight: 900; line-height: 1.35; }
   .navi-cheer-name { margin-top: 4px; white-space: nowrap; color: var(--text-light); font-size: .68rem; font-weight: 800; }
   .navi-result { width: 100%; display:flex; align-items:center; justify-content:center; gap:8px; padding: 2px 4px 0; }
