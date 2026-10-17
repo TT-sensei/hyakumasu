@@ -1089,9 +1089,6 @@ body.dark .btn-action.accent { background:#9a4b28; }
     <button class="numpad-btn zero" data-rn="0">0</button>
     <button class="numpad-btn del" data-rn="del">⌫</button>
   </div>
-  <div class="btn-row">
-    <button class="btn-action secondary" id="btn-review-back">← もどる</button>
-  </div>
 </div>
 
 <!-- GRAPH SCREEN -->
@@ -1103,7 +1100,6 @@ body.dark .btn-action.accent { background:#9a4b28; }
 
   <div class="graph-header">
     <div class="graph-title">📈 きろくグラフ</div>
-    <button class="btn-action secondary" id="btn-graph-back" style="flex:0;padding:8px 16px;font-size:0.85rem;">← もどる</button>
   </div>
   <div class="graph-filter" id="graph-filter"></div>
   <div class="graph-metric" id="graph-metric">
@@ -1116,8 +1112,8 @@ body.dark .btn-action.accent { background:#9a4b28; }
   </div>
   <div class="graph-legend" id="graph-legend">
     <span><i class="legend-dot perfect"></i>全問正解</span>
-    <span><i class="legend-dot almost"></i>ミス1〜2問</span>
-    <span><i class="legend-dot needs"></i>ミス3問以上</span>
+    <span><i class="legend-dot almost"></i>正答率90%以上</span>
+    <span><i class="legend-dot needs"></i>正答率90%未満</span>
   </div>
   <div class="graph-note">全部入力した練習を記録しています。自己ベストは別に保存されます（最大50件）</div>
 </div>
@@ -1295,21 +1291,22 @@ function goHome() {
 function goBack() {
   const current = document.querySelector('.screen.active');
   const currentId = current ? current.id.replace('screen-','') : 'top';
+  // 計算中は問題を途中で離れることになるため、確認を出してホームへ戻す。
   if (currentId === 'game') {
     goHome();
     return;
   }
-  if (currentId === 'result') {
-    goHome();
-    return;
-  }
+  // 復習画面は結果画面へ戻す。ほかは直前の画面履歴を使う。
   if (currentId === 'review') {
     showScreen('result', {fromBack:true});
     return;
   }
-  if (currentId === 'graph') {
-    showScreen('top', {fromBack:true});
-    return;
+  while (screenHistory.length) {
+    const previous = screenHistory.pop();
+    if (previous && previous !== currentId && document.getElementById('screen-' + previous)) {
+      showScreen(previous, {fromBack:true});
+      return;
+    }
   }
   goHome();
 }
@@ -1887,7 +1884,6 @@ document.getElementById('btn-retry').addEventListener('click',()=>{
 });
 document.getElementById('btn-new').addEventListener('click',()=>showScreen('top'));
 document.getElementById('btn-review').addEventListener('click',startReview);
-document.getElementById('btn-review-back').addEventListener('click',()=>showScreen('result'));
 
 // ===== REVIEW =====
 function startReview() {
@@ -2001,7 +1997,6 @@ const GF = [
   {k:'30_add', l:'30たし'}, {k:'30_sub', l:'30ひき'}, {k:'30_mul', l:'30かけ'},
 ];
 document.getElementById('btn-show-graph').addEventListener('click',()=>{graphFilter=bkey();showScreen('graph');});
-document.getElementById('btn-graph-back').addEventListener('click',()=>showScreen('top'));
 
 function renderGraph() {
   const fe = document.getElementById('graph-filter');
