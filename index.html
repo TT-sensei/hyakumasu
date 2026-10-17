@@ -1963,7 +1963,9 @@ function showReviewProblem() {
     save(s);
     showFeedback('🎉',2000);
     seComplete();
-    setTimeout(() => showScreen('result'),2000);
+    setTimeout(() => {
+      if (document.querySelector('.screen.active')?.id === 'screen-review') showScreen('result');
+    },2000);
     return;
   }
   reviewProblem = reviewQueue[reviewIdx];
@@ -2003,14 +2005,16 @@ function handleReviewInput(n) {
       }
       showFeedback('⭕',600);
       reviewIdx++;
-      setTimeout(showReviewProblem,700);
+      setTimeout(() => {
+        if (document.querySelector('.screen.active')?.id === 'screen-review') showReviewProblem();
+      },700);
     } else {
       seWrong();
       showFeedback('❌',800);
       reviewInput = '';
       setTimeout(() => {
         reviewAnswerPending = false;
-        updateReviewEq();
+        if (document.querySelector('.screen.active')?.id === 'screen-review') updateReviewEq();
       },900);
     }
   }
