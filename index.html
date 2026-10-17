@@ -927,6 +927,24 @@ body.dark .btn-action.accent { background:#9a4b28; }
 }
 
 
+
+/* Consistent back/home navigation on every non-home screen */
+.screen-nav {
+  width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  flex:0 0 auto; margin-bottom:2px;
+}
+.screen-nav button {
+  min-height:44px; padding:9px 15px; border:1px solid var(--border); border-radius:11px;
+  background:var(--card); color:var(--text); font-weight:800; font-size:.9rem;
+  box-shadow:none; cursor:pointer; touch-action:manipulation;
+}
+.screen-nav .nav-home { color:var(--primary); border-color:color-mix(in srgb,var(--primary) 40%,var(--border)); }
+.screen-nav button:active { transform:scale(.98); }
+#screen-result.active { grid-template-areas:"nav nav" "heading heading" "best best" "card grid" "review grid" "actions actions"; }
+@media(max-width:740px) {
+  #screen-result.active { grid-template-areas:"nav" "heading" "best" "card" "grid" "review" "actions"; }
+  .screen-nav button { min-height:46px; }
+}
 </style>
 </head>
 <body>
@@ -979,6 +997,11 @@ body.dark .btn-action.accent { background:#9a4b28; }
 
 <!-- GAME SCREEN -->
 <div id="screen-game" class="screen">
+  <div class="screen-nav" aria-label="ページ移動">
+    <button type="button" class="nav-back" data-nav-back>← もどる</button>
+    <button type="button" class="nav-home" data-nav-home>⌂ ホーム</button>
+  </div>
+
   <div class="game-header">
     <div class="game-stat">
       <span class="stat-caption">タイム</span>
@@ -1010,6 +1033,11 @@ body.dark .btn-action.accent { background:#9a4b28; }
 
 <!-- RESULT SCREEN -->
 <div id="screen-result" class="screen">
+  <div class="screen-nav" aria-label="ページ移動">
+    <button type="button" class="nav-back" data-nav-back>← もどる</button>
+    <button type="button" class="nav-home" data-nav-home>⌂ ホーム</button>
+  </div>
+
   <div class="result-heading"><span>今回のけっか</span><small>できたところを見つけよう</small></div>
   <div class="new-best-banner" id="new-best-banner">🏅 じこベスト こうしん！</div>
   <div class="result-card">
@@ -1036,6 +1064,11 @@ body.dark .btn-action.accent { background:#9a4b28; }
 
 <!-- REVIEW SCREEN -->
 <div id="screen-review" class="screen">
+  <div class="screen-nav" aria-label="ページ移動">
+    <button type="button" class="nav-back" data-nav-back>← もどる</button>
+    <button type="button" class="nav-home" data-nav-home>⌂ ホーム</button>
+  </div>
+
   <div style="text-align:center; width:100%;">
     <div style="font-size:1.1rem; font-weight:900; color:var(--accent);">🔥 ミス復習</div>
     <div class="review-progress" id="review-progress"></div>
@@ -1063,6 +1096,11 @@ body.dark .btn-action.accent { background:#9a4b28; }
 
 <!-- GRAPH SCREEN -->
 <div id="screen-graph" class="screen">
+  <div class="screen-nav" aria-label="ページ移動">
+    <button type="button" class="nav-back" data-nav-back>← もどる</button>
+    <button type="button" class="nav-home" data-nav-home>⌂ ホーム</button>
+  </div>
+
   <div class="graph-header">
     <div class="graph-title">📈 きろくグラフ</div>
     <button class="btn-action secondary" id="btn-graph-back" style="flex:0;padding:8px 16px;font-size:0.85rem;">← もどる</button>
@@ -1226,12 +1264,57 @@ let resultData = {};
 let reviewQueue = [], reviewIdx = 0, reviewInput = '', reviewProblem = null;
 
 // ===== SCREEN =====
-function showScreen(id) {
+let screenHistory = ['top'];
+function showScreen(id, options = {}) {
+  const current = document.querySelector('.screen.active');
+  const currentId = current ? current.id.replace('screen-','') : null;
+  if (!options.fromBack && currentId && currentId !== id) {
+    screenHistory.push(currentId);
+    if (screenHistory.length > 30) screenHistory.shift();
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + id).classList.add('active');
+  const target = document.getElementById('screen-' + id);
+  if (!target) return;
+  target.classList.add('active');
   if (id === 'top') renderTop();
   if (id === 'graph') renderGraph();
 }
+function goHome() {
+  if (document.getElementById('screen-game').classList.contains('active')) {
+    const answered = inputs && inputs.flat().some(v => v !== '');
+    if (answered && !gameFinished && !confirm('いまの練習をやめてホームにもどりますか？')) return;
+    clearTimeout(finishTimer);
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerRunning = false;
+    startTime = null;
+  }
+  screenHistory = ['top'];
+  showScreen('top', {fromBack:true});
+}
+function goBack() {
+  const current = document.querySelector('.screen.active');
+  const currentId = current ? current.id.replace('screen-','') : 'top';
+  if (currentId === 'game') {
+    goHome();
+    return;
+  }
+  if (currentId === 'result') {
+    goHome();
+    return;
+  }
+  if (currentId === 'review') {
+    showScreen('result', {fromBack:true});
+    return;
+  }
+  if (currentId === 'graph') {
+    showScreen('top', {fromBack:true});
+    return;
+  }
+  goHome();
+}
+document.querySelectorAll('[data-nav-home]').forEach(button => button.addEventListener('click',goHome));
+document.querySelectorAll('[data-nav-back]').forEach(button => button.addEventListener('click',goBack));
 
 // ===== TOP PLAYER =====
 function renderTop() {
