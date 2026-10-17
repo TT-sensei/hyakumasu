@@ -1527,7 +1527,8 @@ function makeNums(type, count) {
 }
 function genProblem() {
   const sz = parseInt(config.size);
-  const rows = 10, cols = sz===100?10:sz===50?5:3;
+  // 30マス・50マスも横は10列で統一し、縦の段数だけを減らす。
+  const rows = sz===100?10:sz===50?5:3, cols = 10;
   const top  = config.type==='sub' ? makeNums('sub_top',cols) : makeNums('normal',cols);
   const left = makeNums('normal', rows);
   const answers = left.map(l => top.map(t => config.type==='add'?l+t:config.type==='sub'?t-l:l*t));
