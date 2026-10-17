@@ -1407,17 +1407,25 @@ function badgeStats(s) {
   const perfectModes = new Set(perfectRecords.map(r => String(r.k || '').split('_')[1]).filter(Boolean)).size;
   const sizeRuns = size => records.filter(r => String(r.k || '').startsWith(String(size) + '_')).length;
   const perfectSize30 = perfectRecords.filter(r => String(r.k || '').startsWith('30_')).length;
-  const breakthrough = records.some((r,i) =>
-    i > 0 && r.k === records[i-1].k && Number(r.c) > Number(records[i-1].c)
-  );
-  const comeback = records.some((r,i) =>
-    i > 0 && r.k === records[i-1].k && Number(r.a) >= 1 && Number(records[i-1].a) < 1
-  );
+  // 前回との比較は、別のマス数・計算種類の記録を挟んでも同じ条件同士で行う。
+  const previousByKey = new Map();
+  let breakthrough = false;
+  let comeback = false;
+  for (const record of records) {
+    const key = String(record.k || '');
+    const previous = previousByKey.get(key);
+    if (previous) {
+      if (Number(record.c) > Number(previous.c)) breakthrough = true;
+      if (Number(record.a) >= 1 && Number(previous.a) < 1) comeback = true;
+    }
+    previousByKey.set(key, record);
+  }
   return {
     runs: records.length,
     perfect: perfectRecords.length,
-    speed: perfectRecords.filter(r => Number(r.t) < 60000).length,
-    speed45: perfectRecords.filter(r => Number(r.t) < 45000).length,
+    // 「以内」なので境界値ちょうども達成として扱う。
+    speed: perfectRecords.filter(r => Number(r.t) <= 60000).length,
+    speed45: perfectRecords.filter(r => Number(r.t) <= 45000).length,
     days: dates.size,
     modes: modes.size,
     perfectSize30,
