@@ -1905,8 +1905,8 @@ function startReview() {
   const saved = load().missBook || {};
   const recurring = Object.entries(saved)
     .sort((a,b) => (Number(b[1].count)||0) - (Number(a[1].count)||0))
-    .slice(0,10)
     .filter(([key]) => !seen.has(key))
+    .slice(0,10)
     .map(([key,item]) => ({
       row:null,col:null,type:item.type,left:item.left,right:item.right,
       key,correct:Number(item.answer),user:null,fromBook:true
