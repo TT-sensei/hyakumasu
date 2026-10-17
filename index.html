@@ -1066,6 +1066,11 @@ const BADGES = [
   {slug:'adventurer', root:'common', name:'百ます探検家', hint:'75回クリア', test:s=>badgeStats(s).runs>=75}
 ];
 
+function badgeRecords(s) {
+  return Object.entries(s.history || {}).flatMap(([key, rows]) =>
+    (rows || []).filter(r => r && typeof r === 'object').map(r => ({...r, k:r.k || key}))
+  ).sort((a,b) => Number(a.d || 0) - Number(b.d || 0));
+}
 function badgeIsEarned(b, s) {
   return (Array.isArray(s.earnedBadges) && s.earnedBadges.includes(b.slug)) || b.test(s);
 }
