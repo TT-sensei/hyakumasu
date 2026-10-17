@@ -1336,7 +1336,7 @@ document.querySelectorAll('#numpad .numpad-btn').forEach(btn => btn.addEventList
 // ===== GAME FLOW =====
 document.getElementById('btn-start').addEventListener('click', ()=>{
   resumeAudio(); clearTimeout(finishTimer); gameFinished=false;
-  genProblem(); elapsedMs=0; timerRunning=false; startTime=null; clearInterval(timerInterval); timerInterval=null; startTime=null; clearInterval(timerInterval); timerInterval=null;
+  genProblem(); elapsedMs=0; timerRunning=false; startTime=null; clearInterval(timerInterval); timerInterval=null;
   showScreen('game');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ renderGrid(); highlight(); }));
   document.getElementById('timer-display').textContent='0:00.0';
@@ -1509,7 +1509,9 @@ function renderResult() {
   } else {
     rb.disabled = false;
     rb.style.opacity = '1';
-    rb.textContent = '間違いを復習する (' + mistakes.length + '問 + 苦手問題)';
+    rb.textContent = mistakes.length === 0
+      ? 'くり返し間違えた問題を復習する'
+      : '間違いを復習する (' + mistakes.length + '問 + 苦手問題)';
   }
 
   const tb = document.getElementById('result-grid-table');
@@ -1557,7 +1559,7 @@ function renderResult() {
 document.getElementById('btn-retry').addEventListener('click',()=>{
   clearTimeout(finishTimer); gameFinished=false;
   inputs=Array.from({length:problem.rows},()=>Array(problem.cols).fill(''));
-  activeCell={row:0,col:0}; elapsedMs=0; timerRunning=false; startTime=null; clearInterval(timerInterval); timerInterval=null; startTime=null; clearInterval(timerInterval); timerInterval=null;
+  activeCell={row:0,col:0}; elapsedMs=0; timerRunning=false; startTime=null; clearInterval(timerInterval); timerInterval=null;
   showScreen('game');
   requestAnimationFrame(()=>{renderGrid();highlight();});
   document.getElementById('timer-display').textContent='0:00.0';
