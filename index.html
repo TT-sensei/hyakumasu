@@ -1540,14 +1540,14 @@ function genProblem() {
 // ===== GRID =====
 function cellSize() {
   const wrapper = document.getElementById('grid-wrapper');
-  const isTablet = window.innerWidth >= 768;
-  if (isTablet) {
-    // タブレット：グリッドラッパーの縦横両方を考慮してセルサイズを決める
+  // 600px以上ではテンキーが右側に来るため、そのレイアウトに合わせて表を縮尺調整する。
+  const isWideLayout = window.innerWidth >= 600;
+  if (isWideLayout) {
     const availW = wrapper.clientWidth || 500;
     const availH = wrapper.clientHeight || 400;
     const byW = Math.floor((availW - 4) / (problem.cols + 1));
     const byH = Math.floor((availH - 4) / (problem.rows + 1));
-    return Math.max(28, Math.min(byW, byH, 54));
+    return Math.max(24, Math.min(byW, byH, 54));
   }
   return Math.max(32, Math.min(46, Math.floor((wrapper.clientWidth || 320) / (problem.cols + 1))));
 }
