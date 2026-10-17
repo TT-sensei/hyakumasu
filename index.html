@@ -1619,9 +1619,10 @@ function handleInput(n) {
     return;
   }
 
-  if (!timerRunning) startTimer();
   const curr = inputs[row][col];
-  if (curr.length >= 3) return;
+  // 答えの桁数を超える入力を防ぐ。入力済みセルをタップしても余分な桁は追加しない。
+  if (curr.length >= String(problem.answers[row][col]).length) return;
+  if (!timerRunning) startTimer();
   seKey();
   const next = curr + n;
   inputs[row][col] = next;
