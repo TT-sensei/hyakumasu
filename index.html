@@ -1281,7 +1281,7 @@ let activeCell = { row:0, col:0 };
 let timerInterval = null, startTime = null, elapsedMs = 0, timerRunning = false;
 let finishTimer = null, gameFinished = false;
 let resultData = {};
-let reviewQueue = [], reviewIdx = 0, reviewInput = '', reviewProblem = null;
+let reviewQueue = [], reviewIdx = 0, reviewInput = '', reviewProblem = null, reviewAnswerPending = false;
 
 // ===== SCREEN =====
 let screenHistory = ['top'];
@@ -1946,11 +1946,13 @@ function startReview() {
   reviewQueue = shuffle(current.concat(recurring));
   reviewIdx = 0;
   reviewInput = '';
+  reviewAnswerPending = false;
   showScreen('review');
   showReviewProblem();
 }
 
 function showReviewProblem() {
+  reviewAnswerPending = false;
   if (reviewIdx >= reviewQueue.length) {
     const s = load();
     s.reviewClears = (Number(s.reviewClears)||0) + 1;
@@ -1973,6 +1975,8 @@ function showReviewProblem() {
 
 function handleReviewInput(n) {
   resumeAudio();
+  // 正誤判定後の演出中に連打されても、同じ問題を二重に進めない。
+  if (reviewAnswerPending) return;
   if (n === 'del') {
     seDel();
     reviewInput = reviewInput.slice(0,-1);
@@ -1985,6 +1989,7 @@ function handleReviewInput(n) {
   updateReviewEq();
   const ans = reviewProblem.correct;
   if (reviewInput.length >= String(ans).length) {
+    reviewAnswerPending = true;
     if (parseInt(reviewInput,10) === ans) {
       seReviewOk();
       const s = load();
@@ -2003,7 +2008,10 @@ function handleReviewInput(n) {
       seWrong();
       showFeedback('❌',800);
       reviewInput = '';
-      setTimeout(updateReviewEq,900);
+      setTimeout(() => {
+        reviewAnswerPending = false;
+        updateReviewEq();
+      },900);
     }
   }
 }
