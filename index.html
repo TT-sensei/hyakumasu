@@ -1837,9 +1837,14 @@ function renderResult() {
   } else {
     rb.disabled = false;
     rb.style.opacity = '1';
-    rb.textContent = currentReviewCount === 0
-      ? 'くり返し間違えた問題を復習する'
-      : '間違いを復習する (' + currentReviewCount + '問 + 苦手問題)';
+    const additionalReviewCount = Math.min(10,additionalMisses);
+    if (currentReviewCount === 0) {
+      rb.textContent = 'くり返し間違えた問題を復習する (' + additionalReviewCount + '問)';
+    } else if (additionalReviewCount > 0) {
+      rb.textContent = '間違いを復習する (' + currentReviewCount + '問 + 苦手問題 ' + additionalReviewCount + '問)';
+    } else {
+      rb.textContent = '間違いを復習する (' + currentReviewCount + '問)';
+    }
   }
 
   const tb = document.getElementById('result-grid-table');
