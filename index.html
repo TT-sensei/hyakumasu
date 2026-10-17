@@ -1212,18 +1212,42 @@ function lvFromXp(xp) { let lv=1,rem=xp; while(rem>=xpNeeded(lv)){rem-=xpNeeded(
 // ===== SAVE =====
 const SAVE_KEY = 'hyakumas_save';
 function load() {
+  const empty = {xp:0,bests:{},history:{},reviewClears:0,earnedBadges:[],missBook:{}};
   try {
-    const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') || {};
+    const parsed = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    const d = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    const sourceBests = d.bests && typeof d.bests === 'object' && !Array.isArray(d.bests) ? d.bests : {};
+    const sourceHistory = d.history && typeof d.history === 'object' && !Array.isArray(d.history) ? d.history : {};
+    const sourceMissBook = d.missBook && typeof d.missBook === 'object' && !Array.isArray(d.missBook) ? d.missBook : {};
+    const bests = {};
+    for (const [key,value] of Object.entries(sourceBests)) {
+      const n = Number(value);
+      if (Number.isFinite(n) && n >= 0) bests[key] = n;
+    }
+    const history = {};
+    for (const [key,value] of Object.entries(sourceHistory)) {
+      if (Array.isArray(value)) {
+        history[key] = value.filter(item => item && typeof item === 'object' && Number.isFinite(Number(item.t)) && Number.isFinite(Number(item.d)));
+      }
+    }
+    const missBook = {};
+    for (const [key,value] of Object.entries(sourceMissBook)) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+      const answer = Number(value.answer), count = Number(value.count);
+      if (!['add','sub','mul'].includes(value.type) ||
+          !Number.isFinite(Number(value.left)) || !Number.isFinite(Number(value.right)) ||
+          !Number.isFinite(answer) || !Number.isFinite(count) || count <= 0) continue;
+      missBook[key] = {...value, left:Number(value.left), right:Number(value.right), answer, count};
+    }
     return {
-      xp: Number(d.xp) || 0,
-      bests: d.bests && typeof d.bests === 'object' ? d.bests : {},
-      history: d.history && typeof d.history === 'object' ? d.history : {},
-      reviewClears: Number(d.reviewClears) || 0,
-      earnedBadges: Array.isArray(d.earnedBadges) ? d.earnedBadges : [],
-      missBook: d.missBook && typeof d.missBook === 'object' ? d.missBook : {}
+      xp: Math.max(0, Number(d.xp) || 0),
+      bests, history,
+      reviewClears: Math.max(0, Number(d.reviewClears) || 0),
+      earnedBadges: Array.isArray(d.earnedBadges) ? d.earnedBadges.filter(v => typeof v === 'string') : [],
+      missBook
     };
   } catch (error) {
-    return {xp:0,bests:{},history:{},reviewClears:0,earnedBadges:[],missBook:{}};
+    return empty;
   }
 }
 
