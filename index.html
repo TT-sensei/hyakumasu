@@ -1032,6 +1032,8 @@ const NAVI_CHEERS = [
 function renderNaviCheer() {
   const art = document.getElementById('top-navi-art');
   if (!art) return;
+  art.onerror = () => { art.style.display = 'none'; };
+  art.style.display = '';
   art.src = 'https://tt-sensei.github.io/navi-character-/assets/web/groups/group-studying.webp';
   art.alt = 'ナビチーム6人の集合絵｜いっしょに学ぼう';
   document.getElementById('top-navi-message').textContent = '1マスずつ、いっしょに！';
@@ -1127,7 +1129,7 @@ function renderBadges() {
   document.getElementById('badge-collection-grid').innerHTML = BADGES.map(b => {
     const got = badgeIsEarned(b, s);
     return '<div class="badge-card ' + (got ? 'earned' : 'locked') + '">' +
-      '<img src="' + EDU_BADGE_IMAGE(b) + '" alt="' + (got ? b.name : '未獲得バッジ') + '">' +
+      '<img src="' + EDU_BADGE_IMAGE(b) + '" alt="' + (got ? b.name : '未獲得バッジ') + '" loading="lazy" onerror="this.hidden=true">' +
       '<div class="badge-card-name">' + (got ? b.name : '？？？') + '</div>' +
       '<div class="badge-card-hint">' + (got ? b.hint : '条件を達成すると解放') + '</div>' +
       '</div>';
@@ -1473,6 +1475,8 @@ function renderResult() {
   document.getElementById('xp-gain').textContent = '+' + xp + ' XP';
   const resultNavi = NAVI_CHEERS[(new Date().getDate() + correct) % NAVI_CHEERS.length];
   const resultNaviArt = document.getElementById('result-navi-art');
+  resultNaviArt.onerror = () => { resultNaviArt.style.display = 'none'; };
+  resultNaviArt.style.display = '';
   resultNaviArt.src = NAVI_IMAGE(resultNavi.id, resultNavi.pose);
   resultNaviArt.alt = resultNavi.name + '｜結果を応援';
   document.getElementById('result-navi-message').innerHTML = resultNavi.name + '「<strong>' +
@@ -1565,7 +1569,12 @@ document.getElementById('btn-review-back').addEventListener('click',()=>showScre
 
 // ===== REVIEW =====
 function startReview() {
-  const current = [...(resultData.mistakes || [])];
+  const currentMap = new Map();
+  for (const item of (resultData.mistakes || [])) {
+    const key = item.key || ('cell:' + item.row + ':' + item.col);
+    if (!currentMap.has(key)) currentMap.set(key,item);
+  }
+  const current = [...currentMap.values()];
   const seen = new Set(current.map(m => m.key).filter(Boolean));
   const saved = load().missBook || {};
   const recurring = Object.entries(saved)
