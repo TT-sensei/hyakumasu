@@ -1824,8 +1824,10 @@ function renderResult() {
     }, isBest ? 1000 : 600);
   }
 
-  const persistentMisses = Object.keys(s.missBook || {}).length;
-  const reviewable = mistakes.length + Math.min(10,persistentMisses);
+  const currentReviewKeys = new Set(mistakes.map(m => m.key).filter(Boolean));
+  const currentReviewCount = new Set(mistakes.map(m => m.key || ('cell:' + m.row + ':' + m.col))).size;
+  const additionalMisses = Object.keys(s.missBook || {}).filter(key => !currentReviewKeys.has(key)).length;
+  const reviewable = currentReviewCount + Math.min(10,additionalMisses);
   const rb = document.getElementById('btn-review');
   if (reviewable === 0) {
     rb.disabled = true;
@@ -1834,9 +1836,9 @@ function renderResult() {
   } else {
     rb.disabled = false;
     rb.style.opacity = '1';
-    rb.textContent = mistakes.length === 0
+    rb.textContent = currentReviewCount === 0
       ? 'くり返し間違えた問題を復習する'
-      : '間違いを復習する (' + mistakes.length + '問 + 苦手問題)';
+      : '間違いを復習する (' + currentReviewCount + '問 + 苦手問題)';
   }
 
   const tb = document.getElementById('result-grid-table');
